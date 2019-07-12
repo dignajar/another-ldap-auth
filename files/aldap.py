@@ -1,0 +1,79 @@
+import ldap
+import time
+
+class Aldap:
+	def __init__(self, ldapEndpoint, dnUsername, dnPassword, serverDomain, searchBase, searchFilter, username, password):
+		self.ldapEndpoint = ldapEndpoint
+		self.searchBase = searchBase
+		self.dnUsername = dnUsername
+		self.dnPassword = dnPassword
+		self.serverDomain = serverDomain
+		self.username = username
+		self.password = password
+
+		# Replace in the filter the {username} for the username
+		self.searchFilter = searchFilter.replace("{username}", self.username)
+
+		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+		self.connect = ldap.initialize(self.ldapEndpoint)
+		self.connect.set_option(ldap.OPT_REFERRALS, 0)
+		self.connect.set_option(ldap.OPT_DEBUG_LEVEL, 255)
+
+	def search(self):
+		print("[INFO][SEARCH] Searching by filter:", self.searchFilter)
+		start = time.time()
+
+		result = ""
+		try:
+			self.connect.simple_bind_s(self.dnUsername, self.dnPassword)
+			result = self.connect.search_s(self.searchBase, ldap.SCOPE_SUBTREE, self.searchFilter)
+			#self.connect.unbind_s()
+		except ldap.LDAPError as e:
+			print(e)
+
+		print("[INFO][SEARCH] Time:", time.time()-start)
+		return result
+
+	# Validate the groups in the Active Directory tree
+	def validateGroups(self, groups):
+		tree = self.search()
+
+		print("[INFO][GROUPS] Validating groups:", groups)
+
+		# List for the matches groups
+		matchesGroups = []
+		for listAD in tree:
+			for group in groups:
+				# Check if the user has this group
+				if group in str(listAD):
+					# The user has this group include the group in the matchesGroup
+					matchesGroups.append(group)
+
+		# If the group is the same as matchesGroups means the user has all the groups
+		if set(groups) == set(matchesGroups):
+			print("[INFO][GROUPS] Valid groups.")
+			return True
+		
+		print("[ERROR][GROUPS] Invalid groups.")
+		return False
+
+	def authenticateUser(self):
+		finalUsername = self.username
+		if self.serverDomain:
+			# The configuration has serverDomain the username is username@domain
+			finalUsername = self.username+"@"+self.serverDomain
+
+		print("[INFO][AUTHENTICATION] Authenticating user:", finalUsername)
+		start = time.time()
+		try:
+			self.connect.simple_bind_s(finalUsername, self.password)
+			self.connect.unbind_s()
+			print("[INFO][AUTHENTICATION] Username valid:", finalUsername)
+			print("[INFO][AUTHENTICATION] Time:", time.time()-start)
+			return True
+		except ldap.INVALID_CREDENTIALS:
+			print("[ERROR][AUTHENTICATION] Invalid credentials.")
+		except ldap.LDAPError as e:
+			print(e)
+			
+		return False
