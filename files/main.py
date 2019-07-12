@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import request
 from flask_httpauth import HTTPBasicAuth
 from aldap import Aldap
 from os import environ
@@ -10,24 +11,64 @@ auth = HTTPBasicAuth()
 def login(username, password):
 
     if not username or not password:
-        print("Username or password empty.")
+        print("[ERROR] Username or password empty.")
         return False
 
+    try:
+        # Get parameters from Headers or from Environment variables
+        if "Ldap-Endpoint" in request.headers:
+            LDAP_ENDPOINT = request.headers.get("Ldap-Endpoint")
+        else:
+            LDAP_ENDPOINT = environ['LDAP_ENDPOINT']
+
+        if "Ldap-Manager-Dn-Username" in request.headers:
+            LDAP_MANAGER_DN_USERNAME = request.headers["Ldap-Manager-Dn-Username"]
+        else:
+            LDAP_MANAGER_DN_USERNAME = environ['LDAP_MANAGER_DN_USERNAME']
+
+        if "Ldap-Manager-Password" in request.headers:
+            LDAP_MANAGER_PASSWORD = request.headers["Ldap-Manager-Password"]
+        else:
+            LDAP_MANAGER_PASSWORD = environ['LDAP_MANAGER_PASSWORD']
+
+        if "Ldap-Server-Domain" in request.headers:
+            LDAP_SERVER_DOMAIN = request.headers["Ldap-Server-Domain"]
+        else:
+            LDAP_SERVER_DOMAIN = environ['LDAP_SERVER_DOMAIN']
+
+        if "Ldap-Search-Base" in request.headers:
+            LDAP_SEARCH_BASE = request.headers["Ldap-Search-Base"]
+        else:
+            LDAP_SEARCH_BASE = environ['LDAP_SEARCH_BASE']
+
+        if "Ldap-Search-Filter" in request.headers:
+            LDAP_SEARCH_FILTER = request.headers["Ldap-Search-Filter"]
+        else:
+            LDAP_SEARCH_FILTER = environ['LDAP_SEARCH_FILTER']
+
+        if "Ldap-Required-Groups" in request.headers:
+            LDAP_REQUIRED_GROUPS = request.headers["Ldap-Required-Groups"]
+        else:
+            LDAP_REQUIRED_GROUPS = environ['LDAP_REQUIRED_GROUPS']
+    except KeyError as e:
+        print("[ERROR] Invalid parameter: ", e)
+        return False
+
+    # Create the god of ldaps authentications object
     aldap = Aldap (
-            environ['LDAP_ENDPOINT'],
-            environ['LDAP_MANAGER_DN_USERNAME'],
-            environ['LDAP_MANAGER_PASSWORD'],
-            environ['LDAP_SERVER_DOMAIN'],
-            environ['LDAP_SEARCH_BASE'],
-            environ['LDAP_SEARCH_FILTER'],
+            LDAP_ENDPOINT,
+            LDAP_MANAGER_DN_USERNAME,
+            LDAP_MANAGER_PASSWORD,
+            LDAP_SERVER_DOMAIN,
+            LDAP_SEARCH_BASE,
+            LDAP_SEARCH_FILTER,
             username,
             password
     )
 
     # Check for required groups only if the environment variable is defined
-    if environ['LDAP_REQUIRED_GROUPS']:
-        requiredGroups = environ['LDAP_REQUIRED_GROUPS'].split(",")
-        if not aldap.validateGroups(requiredGroups):
+    if LDAP_REQUIRED_GROUPS:
+        if not aldap.validateGroups( LDAP_REQUIRED_GROUPS.split(",") ):
             return False
 
     # Check if the username and password are valid
