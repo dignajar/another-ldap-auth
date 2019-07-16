@@ -19,37 +19,42 @@ def login(username, password):
         if "Ldap-Endpoint" in request.headers:
             LDAP_ENDPOINT = request.headers.get("Ldap-Endpoint")
         else:
-            LDAP_ENDPOINT = environ['LDAP_ENDPOINT']
+            LDAP_ENDPOINT = environ["LDAP_ENDPOINT"]
 
         if "Ldap-Manager-Dn-Username" in request.headers:
             LDAP_MANAGER_DN_USERNAME = request.headers["Ldap-Manager-Dn-Username"]
         else:
-            LDAP_MANAGER_DN_USERNAME = environ['LDAP_MANAGER_DN_USERNAME']
+            LDAP_MANAGER_DN_USERNAME = environ["LDAP_MANAGER_DN_USERNAME"]
 
         if "Ldap-Manager-Password" in request.headers:
             LDAP_MANAGER_PASSWORD = request.headers["Ldap-Manager-Password"]
         else:
-            LDAP_MANAGER_PASSWORD = environ['LDAP_MANAGER_PASSWORD']
-
-        if "Ldap-Server-Domain" in request.headers:
-            LDAP_SERVER_DOMAIN = request.headers["Ldap-Server-Domain"]
-        else:
-            LDAP_SERVER_DOMAIN = environ['LDAP_SERVER_DOMAIN']
+            LDAP_MANAGER_PASSWORD = environ["LDAP_MANAGER_PASSWORD"]
 
         if "Ldap-Search-Base" in request.headers:
             LDAP_SEARCH_BASE = request.headers["Ldap-Search-Base"]
         else:
-            LDAP_SEARCH_BASE = environ['LDAP_SEARCH_BASE']
+            LDAP_SEARCH_BASE = environ["LDAP_SEARCH_BASE"]
 
         if "Ldap-Search-Filter" in request.headers:
             LDAP_SEARCH_FILTER = request.headers["Ldap-Search-Filter"]
         else:
-            LDAP_SEARCH_FILTER = environ['LDAP_SEARCH_FILTER']
+            LDAP_SEARCH_FILTER = environ["LDAP_SEARCH_FILTER"]
 
+        # Optional parameter
+        LDAP_REQUIRED_GROUPS = ""
         if "Ldap-Required-Groups" in request.headers:
             LDAP_REQUIRED_GROUPS = request.headers["Ldap-Required-Groups"]
-        else:
-            LDAP_REQUIRED_GROUPS = environ['LDAP_REQUIRED_GROUPS']
+        elif "LDAP_REQUIRED_GROUPS" in environ:
+            LDAP_REQUIRED_GROUPS = environ["LDAP_REQUIRED_GROUPS"]
+
+        # Optional parameter
+        LDAP_SERVER_DOMAIN = ""
+        if "Ldap-Server-Domain" in request.headers:
+            LDAP_SERVER_DOMAIN = request.headers["Ldap-Server-Domain"]
+        elif "LDAP_SERVER_DOMAIN" in environ:
+            LDAP_SERVER_DOMAIN = environ["LDAP_SERVER_DOMAIN"]
+
     except KeyError as e:
         print("[ERROR] Invalid parameter: ", e)
         return False

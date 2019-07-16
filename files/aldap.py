@@ -29,6 +29,7 @@ class Aldap:
 			result = self.connect.search_s(self.searchBase, ldap.SCOPE_SUBTREE, self.searchFilter)
 			#self.connect.unbind_s()
 		except ldap.LDAPError as e:
+			print("[ERROR][SEARCH] There was an error when trying to bind: ")
 			print(e)
 
 		print("[INFO][SEARCH] Time:", time.time()-start)
@@ -45,9 +46,11 @@ class Aldap:
 		for listAD in tree:
 			for group in groups:
 				# Check if the user has this group
-				if group in str(listAD):
+				if group.lower() in str(listAD).lower():
 					# The user has this group include the group in the matchesGroup
 					matchesGroups.append(group)
+
+		print("[INFO][GROUPS] Matches groups: ",matchesGroups)
 
 		# If the group is the same as matchesGroups means the user has all the groups
 		if set(groups) == set(matchesGroups):
@@ -74,6 +77,7 @@ class Aldap:
 		except ldap.INVALID_CREDENTIALS:
 			print("[ERROR][AUTHENTICATION] Invalid credentials.")
 		except ldap.LDAPError as e:
+			print("[ERROR][AUTHENTICATION] There was an error when trying to bind: ")
 			print(e)
 			
 		return False
