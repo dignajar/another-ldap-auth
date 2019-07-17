@@ -27,7 +27,7 @@ docker run -d \
         -e LDAP_SEARCH_FILTER='(sAMAccountName={username})' \
         -p 9000:9000 \
         --name another_ldap_auth \
-        docker.hub.com/another_ldap_auth:0.1
+        dignajar/another-ldap-auth:latest
 ```
 
 **Another LDAP Authentication** now is running on `http://localhost:9000`.
