@@ -4,9 +4,7 @@
 
 **Another LDAP Authentication** is an implementation of the `ldap-auth-daemon` services described in the official blog from Nginx in the [following article](https://www.nginx.com/blog/nginx-plus-authenticate-users/).
 
-**Another LDAP Authentication** it's prepared to run inside a Docker container, also you can run the Python script without the Docker container.
-
-Supports `ldap` and `ldaps`.
+**Another LDAP Authentication** it's prepared to run inside a Docker container, also you can run the Python script without the Docker container. Supports `ldap` and `ldaps` and provide a simple cache.
 
 ## Diagram
 ![Another LDAP Authentication](https://i.ibb.co/Fn1ncbP/another-ldap-authentication.jpg)
@@ -63,8 +61,9 @@ The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username,
 - `LDAP_MANAGER_PASSWORD` Password for the bind user.
 - `LDAP_SEARCH_BASE` Ex: `DC=TESTMYLDAP,DC=COM`
 - `LDAP_SEARCH_FILTER` Filter to search, for Microsoft Active Directory usually you can use `sAMAccountName`. Ex: `(sAMAccountName={username})`
-- `LDAP_SERVER_DOMAIN` (Optional), for Microsoft Active Directory usually need the domain name for authenticate the user. Ex: `TESTMYLDAP.COM`
-- `LDAP_REQUIRED_GROUPS` (Optional), required groups are case insensitive (`DevOps` is the same as `DEVOPS`), you can send a list separated by commas, try first without required groups. Ex: `'DevOps', 'DevOps_QA'`
+- `LDAP_SERVER_DOMAIN` **(Optional)**, for Microsoft Active Directory usually need the domain name for authenticate the user. Ex: `TESTMYLDAP.COM`
+- `LDAP_REQUIRED_GROUPS` **(Optional)**, required groups are case insensitive (`DevOps` is the same as `DEVOPS`), you can send a list separated by commas, try first without required groups. Ex: `'DevOps', 'DevOps_QA'`
+- `CACHE_EXPIRATION` **(Optional, default=5)** Expiration time in minutes for the cache. Ex: `10`
 
 ### HTTP headers
 - `Ldap-Endpoint`
@@ -72,8 +71,8 @@ The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username,
 - `Ldap-Manager-Password`
 - `Ldap-Search-Base`
 - `Ldap-Search-Filter`
-- `Ldap-Server-Domain` (Optional)
-- `Ldap-Required-Groups` (Optional)
+- `Ldap-Server-Domain` **(Optional)**
+- `Ldap-Required-Groups` **(Optional)**
 
 ## Known limitations
 - Parameters via headers need to be escaped, for example, you can not send parameters such as `$1` or `$test` because Nginx is applying variable expansion.
