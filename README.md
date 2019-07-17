@@ -6,33 +6,36 @@
 
 **Another LDAP Authentication** it's prepared to run inside a Docker container, also you can run the Python script without the Docker container.
 
-**Another LDAP Authentication** supports `ldap` and `ldaps`.
+Supports `ldap` and `ldaps`.
 
 ## Diagram
-![Nginx-LDAP-Auth-Daemon](https://www.nginx.com/wp-content/uploads/2016/02/ldap-auth-components.jpg)
+![Another LDAP Authentication](https://i.ibb.co/Fn1ncbP/another-ldap-authentication.jpg)
 
 ## Installation and configuration
-The easy way to use **Another LDAP Authentication** is running as a Docker container.
+The easy way to use **Another LDAP Authentication** is running as a Docker container and set the parameters via environment variables.
 
-Run as a Docker container
+### Step 1 - Run as a Docker container
+Change the environment variables with your setup.
+
 ```
 docker run -d \
         -e LDAP_ENDPOINT='ldaps://testmyldap.com:636' \
         -e LDAP_MANAGER_DN_USERNAME='CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM' \
-        -e LDAP_MANAGER_PASSWORD='MasterpasswordNotHack123' \
+        -e LDAP_MANAGER_PASSWORD='MasterpasswordNoHack123' \
         -e LDAP_SERVER_DOMAIN='TESTMYLDAP.COM' \
         -e LDAP_SEARCH_BASE='DC=TESTMYLDAP,DC=COM' \
         -e LDAP_SEARCH_FILTER='(sAMAccountName={username})' \
-        -e LDAP_REQUIRED_GROUPS='"DevOps", "DevOps_QA"' \
         -p 9000:9000 \
         --name another_ldap_auth \
         docker.hub.com/another_ldap_auth:0.1
 ```
 
-### Nginx configuration
+**Another LDAP Authentication** now is running on `http://localhost:9000`.
+
+### Step 2 - Nginx configuration
 Nginx use the module [ngx_http_auth_request_module](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) to do the subrequest.
 
-The following example shows how to configure Nginx which is running in the same machine as **Another LDAP Authentication** on the port `9000`.
+The following example shows how to configure Nginx which is running in the same machine as **Another LDAP Authentication**. The backend `/private/` includes the authentication request to `/another_ldap_auth`.
 
 ```
 location /private/ {
@@ -51,6 +54,8 @@ location = /another_ldap_auth {
 
 ## Available configurations parameters
 The parameters can be sent via environment variables or via HTTP headers, also you can combine them.
+
+The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username, you can do something like this `(sAMAccountName={username})` and `{username}` is going to be replaced by the username typed in the login form.
 
 ### Environment variables
 - `LDAP_ENDPOINT` LDAP URL with the port number. Ex: `ldaps://testmyldap.com:636`
