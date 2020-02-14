@@ -50,6 +50,107 @@ location = /another_ldap_auth {
 }
 ```
 
+## Deploy in Kubernetes with Nginx ingress controller
+
+Manifiest for deployment Another LDAP Auth, `another-deployment.yaml`.
+```
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: another-ldap-auth
+  namespace: ingress-nginx
+  labels:
+    app: another-ldap-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: another-ldap-auth
+  template:
+    metadata:
+      labels:
+        app: another-ldap-auth
+    spec:
+      containers:
+        - image: dignajar/another-ldap-auth:latest
+          name: another-ldap-auth
+          ports:
+            - name: http
+              containerPort: 9000
+          env:
+            - name: LDAP_ENDPOINT
+              value: "ldaps://testmyldap.com:636"
+            - name: LDAP_MANAGER_DN_USERNAME
+              value: "CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM"
+            - name: LDAP_SERVER_DOMAIN
+              value: "TESTMYLDAP"
+            - name: LDAP_SEARCH_BASE
+              value: "DC=TESTMYLDAP,DC=COM"
+            - name: LDAP_SEARCH_FILTER
+              value: "(sAMAccountName={username})"
+            - name: LDAP_MANAGER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: another-ldap-auth
+                  key: LDAP_MANAGER_PASSWORD
+```
+
+Manifiest for secret Another LDAP Auth, `another-secret.yaml`.
+```
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: another-ldap-auth
+  namespace: ingress-nginx
+type: Opaque
+data:
+  LDAP_MANAGER_PASSWORD: <your-password-in-base64>
+```
+
+Manifiest for service Another LDAP Auth, `another-service.yaml`.
+```
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: another-ldap-auth
+  namespace: ingress-nginx
+spec:
+  type: ClusterIP
+  selector:
+    app: another-ldap-auth
+  ports:
+    - name: another-ldap-auth
+      port: 80
+      protocol: TCP
+      targetPort: 9000
+```
+
+Manifest for the application you want to add authentication. You can remove the comments and send as variable `Required groups` to filter more the users.
+```
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: demo-webserver
+  namespace: demo
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: http://another-ldap-auth.ingress-nginx.svc.cluster.local
+    # nginx.ingress.kubernetes.io/auth-snippet: |
+    #   proxy_set_header Ldap-Required-Groups "<SOME GROUP>";
+spec:
+  rules:
+  - host: demo.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: demo-webserver
+          servicePort: 80
+```
+
 ## Available configurations parameters
 The parameters can be sent via environment variables or via HTTP headers, also you can combine them.
 
