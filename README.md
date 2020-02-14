@@ -52,7 +52,7 @@ location = /another_ldap_auth {
 
 ## Deploy in Kubernetes with Nginx ingress controller
 
-Manifiest for deployment Another LDAP Auth, `another-deployment.yaml`.
+Another LDAP Auth deployment manifest, `another-deployment.yaml`.
 ```
 ---
 apiVersion: apps/v1
@@ -96,7 +96,7 @@ spec:
                   key: LDAP_MANAGER_PASSWORD
 ```
 
-Manifiest for secret Another LDAP Auth, `another-secret.yaml`.
+Another LDAP Auth secret manifest, `another-secret.yaml`.
 ```
 ---
 apiVersion: v1
@@ -109,7 +109,7 @@ data:
   LDAP_MANAGER_PASSWORD: <your-password-in-base64>
 ```
 
-Manifiest for service Another LDAP Auth, `another-service.yaml`.
+Another LDAP Auth service manifest, `another-service.yaml`.
 ```
 ---
 kind: Service
@@ -128,7 +128,7 @@ spec:
       targetPort: 9000
 ```
 
-Manifest for the application you want to add authentication. You can remove the comments and send as variable `Required groups` to filter more the users.
+Ingress manifest for the application you want to add authentication. You can remove the un-comment and send headers as variables such as `Required groups`.
 ```
 ---
 apiVersion: extensions/v1beta1
