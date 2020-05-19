@@ -9,6 +9,36 @@
 ## Diagram
 ![Another LDAP Authentication](https://i.ibb.co/Fn1ncbP/another-ldap-authentication.jpg)
 
+## Available configurations parameters
+The parameters can be sent via environment variables or via HTTP headers, also you can combine them.
+
+The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username, you can do something like this `(sAMAccountName={username})` and `{username}` is going to be replaced by the username typed in the login form.
+
+### Environment variables
+- `LDAP_ENDPOINT` LDAP URL with the port number. Ex: `ldaps://testmyldap.com:636`
+- `LDAP_MANAGER_DN_USERNAME` Username to bind and search in the LDAP tree. Ex: `CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM`
+- `LDAP_MANAGER_PASSWORD` Password for the bind user.
+- `LDAP_SEARCH_BASE` Ex: `DC=TESTMYLDAP,DC=COM`
+- `LDAP_SEARCH_FILTER` Filter to search, for Microsoft Active Directory usually you can use `sAMAccountName`. Ex: `(sAMAccountName={username})`
+- `LDAP_SERVER_DOMAIN` **(Optional)**, for Microsoft Active Directory usually need the domain name for authenticate the user. Ex: `TESTMYLDAP.COM`
+- `LDAP_REQUIRED_GROUPS` **(Optional)**, required groups are case insensitive (`DevOps` is the same as `DEVOPS`), you can send a list separated by commas, try first without required groups. Ex: `'DevOps', 'DevOps_QA'`
+- `LDAP_REQUIRED_GROUPS_CONDITIONAL` **(Optional, default="and")**, you can set the conditional to match all the groups on the list or just one of them. To match all of them use `and` and for match just one use `or`. Ex: `and`
+- `CACHE_EXPIRATION` **(Optional, default=5)** Expiration time in minutes for the cache. Ex: `10`
+
+### HTTP request headers
+- `Ldap-Endpoint`
+- `Ldap-Manager-Dn-Username`
+- `Ldap-Manager-Password`
+- `Ldap-Search-Base`
+- `Ldap-Search-Filter`
+- `Ldap-Server-Domain` **(Optional)**
+- `Ldap-Required-Groups` **(Optional)**
+- `Ldap-Required-Groups-Conditional` **(Optional)**
+
+### HTTP response headers
+- `x-username` Contains the authenticated username
+- `x-groups` Contains the username matches groups
+
 ## Installation and configuration
 The easy way to use **Another LDAP Authentication** is running as a Docker container and set the parameters via environment variables.
 
@@ -151,32 +181,6 @@ spec:
           serviceName: demo-webserver
           servicePort: 80
 ```
-
-## Available configurations parameters
-The parameters can be sent via environment variables or via HTTP headers, also you can combine them.
-
-The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username, you can do something like this `(sAMAccountName={username})` and `{username}` is going to be replaced by the username typed in the login form.
-
-### Environment variables
-- `LDAP_ENDPOINT` LDAP URL with the port number. Ex: `ldaps://testmyldap.com:636`
-- `LDAP_MANAGER_DN_USERNAME` Username to bind and search in the LDAP tree. Ex: `CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM`
-- `LDAP_MANAGER_PASSWORD` Password for the bind user.
-- `LDAP_SEARCH_BASE` Ex: `DC=TESTMYLDAP,DC=COM`
-- `LDAP_SEARCH_FILTER` Filter to search, for Microsoft Active Directory usually you can use `sAMAccountName`. Ex: `(sAMAccountName={username})`
-- `LDAP_SERVER_DOMAIN` **(Optional)**, for Microsoft Active Directory usually need the domain name for authenticate the user. Ex: `TESTMYLDAP.COM`
-- `LDAP_REQUIRED_GROUPS` **(Optional)**, required groups are case insensitive (`DevOps` is the same as `DEVOPS`), you can send a list separated by commas, try first without required groups. Ex: `'DevOps', 'DevOps_QA'`
-- `LDAP_REQUIRED_GROUPS_CONDITIONAL` **(Optional, default=and)**, you can set the conditional to match all the groups on the list or just one of them. To match all of them use `and` and for match just one use `or`. Ex: `and`
-- `CACHE_EXPIRATION` **(Optional, default=5)** Expiration time in minutes for the cache. Ex: `10`
-
-### HTTP headers
-- `Ldap-Endpoint`
-- `Ldap-Manager-Dn-Username`
-- `Ldap-Manager-Password`
-- `Ldap-Search-Base`
-- `Ldap-Search-Filter`
-- `Ldap-Server-Domain` **(Optional)**
-- `Ldap-Required-Groups` **(Optional)**
-- `Ldap-Required-Groups-Conditional` **(Optional)**
 
 ## Known limitations
 - Parameters via headers need to be escaped, for example, you can not send parameters such as `$1` or `$test` because Nginx is applying variable expansion.

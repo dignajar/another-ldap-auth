@@ -53,19 +53,26 @@ class Aldap:
 				if group.lower() in str(listAD).lower():
 					# The user has this group include the group in the matchesGroup
 					matchesGroups.append(group)
-					if conditional == 'or':
-						print("[INFO][GROUPS] Matched group:",group)
-						return True
 
 		print("[INFO][GROUPS] Matched groups:",matchesGroups)
 
-		# If the group is the same as matchesGroups means the user has all the groups
-		if set(groups) == set(matchesGroups):
-			print("[INFO][GROUPS] All groups are valid for the user.")
-			return True
+		# Conditiona OR, true if just 1 group match
+		if conditional == 'or':
+			for group in groups:
+				if group in matchesGroups:
+					print("[INFO][GROUPS] One of the groups is valid for the user.")
+					return True,matchesGroups
+		# Conditiona AND, true if all the groups match
+		elif conditional == 'and':
+			if set(groups) == set(matchesGroups):
+				print("[INFO][GROUPS] All groups are valid for the user.")
+				return True,matchesGroups
+		else:
+			print("[WARN][GROUPS] Invalid group conditional.")
+			return False,[]
 
 		print("[WARN][GROUPS] Invalid groups.")
-		return False
+		return False,[]
 
 	def authenticateUser(self):
 		finalUsername = self.username

@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import request
+from flask import g
 from flask_httpauth import HTTPBasicAuth
 from aldap import Aldap
 from cache import Cache
@@ -17,7 +18,6 @@ cache = Cache(CACHE_EXPIRATION)
 
 @auth.verify_password
 def login(username, password):
-
 	if not username or not password:
 		print("[ERROR] Username or password empty.")
 		return False
@@ -86,10 +86,12 @@ def login(username, password):
 	aldap.setUser(username, password)
 
 	# Check groups only if they are defined
+	matchesGroups = []
 	if LDAP_REQUIRED_GROUPS:
 		groups = LDAP_REQUIRED_GROUPS.split(",") # Split the groups by comma and trim
 		groups = [x.strip() for x in groups] # Remove spaces
-		if not aldap.validateGroups(groups, LDAP_REQUIRED_GROUPS_CONDITIONAL):
+		validGroups, matchesGroups = aldap.validateGroups(groups, LDAP_REQUIRED_GROUPS_CONDITIONAL)
+		if not validGroups:
 			return False
 
 	# Check if the username and password are valid
@@ -102,6 +104,8 @@ def login(username, password):
 	cache.add(username, password)
 
 	# Success
+	g.username = username # Set the username to send in the headers response
+	g.matchesGroups = ','.join(matchesGroups) # Set the matches groups to send in the headers response
 	return True
 
 # Catch-All URL
@@ -111,7 +115,8 @@ def login(username, password):
 def index(path):
 	code = 200
 	msg = "Another LDAP Auth"
-	return msg, code
+	headers = [('x-username', g.username),('x-groups', g.matchesGroups)]
+	return msg, code, headers
 
 # Main
 if __name__ == '__main__':
