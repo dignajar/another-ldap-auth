@@ -87,7 +87,8 @@ def login(username, password):
 
 	# Check groups only if they are defined
 	if LDAP_REQUIRED_GROUPS:
-		groups = LDAP_REQUIRED_GROUPS.split(",") # Split the groups by comma
+		groups = LDAP_REQUIRED_GROUPS.split(",") # Split the groups by comma and trim
+		groups = [x.strip() for x in groups] # Remove spaces
 		if not aldap.validateGroups(groups, LDAP_REQUIRED_GROUPS_CONDITIONAL):
 			return False
 
