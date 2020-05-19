@@ -20,7 +20,7 @@ class Aldap:
 	def setUser(self, username, password):
 		self.username = username
 		self.password = password
-		# Replace in the filter the {username} for the username
+		# Replace in the filter the variable "{username}" for the username
 		self.searchFilter = self.searchFilter.replace("{username}", self.username)
 
 	def search(self):
@@ -39,10 +39,11 @@ class Aldap:
 		return result
 
 	# Validate the groups in the Active Directory tree
-	def validateGroups(self, groups):
+	def validateGroups(self, groups, conditional):
 		tree = self.search()
 
 		print("[INFO][GROUPS] Validating the following groups:", groups)
+		print("[INFO][GROUPS] Conditional:", conditional)
 
 		# List for the matches groups
 		matchesGroups = []
@@ -52,6 +53,9 @@ class Aldap:
 				if group.lower() in str(listAD).lower():
 					# The user has this group include the group in the matchesGroup
 					matchesGroups.append(group)
+					if conditional == 'or':
+						print("[INFO][GROUPS] Matched group:",group)
+						return True
 
 		print("[INFO][GROUPS] Matched groups:",matchesGroups)
 
@@ -59,7 +63,7 @@ class Aldap:
 		if set(groups) == set(matchesGroups):
 			print("[INFO][GROUPS] All groups are valid for the user.")
 			return True
-		
+
 		print("[WARN][GROUPS] Invalid groups.")
 		return False
 
@@ -70,7 +74,7 @@ class Aldap:
 			finalUsername = self.username+"@"+self.serverDomain
 
 		print("[INFO][AUTHENTICATION] Authenticating user:", finalUsername)
-		
+
 		start = time.time()
 		try:
 			self.connect.simple_bind_s(finalUsername, self.password)
@@ -83,5 +87,5 @@ class Aldap:
 		except ldap.LDAPError as e:
 			print("[ERROR][AUTHENTICATION] There was an error trying to bind.")
 			print(e)
-			
+
 		return False

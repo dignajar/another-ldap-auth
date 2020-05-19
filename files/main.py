@@ -5,6 +5,7 @@ from aldap import Aldap
 from cache import Cache
 from os import environ
 
+# --- Flask --------------------------------------------------------------------
 app = Flask(__name__)
 auth = HTTPBasicAuth()
 
@@ -55,6 +56,12 @@ def login(username, password):
 		elif "LDAP_REQUIRED_GROUPS" in environ:
 			LDAP_REQUIRED_GROUPS = environ["LDAP_REQUIRED_GROUPS"]
 
+		LDAP_REQUIRED_GROUPS_CONDITIONAL = "and" # The default is "and", another option is "or"
+		if "Ldap-Required-Groups-Conditional" in request.headers:
+			LDAP_REQUIRED_GROUPS_CONDITIONAL = request.headers["Ldap-Required-Groups-Conditional"]
+		elif "LDAP_REQUIRED_GROUPS_CONDITIONAL" in environ:
+			LDAP_REQUIRED_GROUPS_CONDITIONAL = environ["LDAP_REQUIRED_GROUPS_CONDITIONAL"]
+
 		LDAP_SERVER_DOMAIN = ""
 		if "Ldap-Server-Domain" in request.headers:
 			LDAP_SERVER_DOMAIN = request.headers["Ldap-Server-Domain"]
@@ -64,7 +71,7 @@ def login(username, password):
 		print("[ERROR] Invalid parameter: ", e)
 		return False
 
-	# Create the god of ldaps authentications object
+	# Create the ALDAP object
 	aldap = Aldap (
 		LDAP_ENDPOINT,
 		LDAP_MANAGER_DN_USERNAME,
@@ -74,16 +81,18 @@ def login(username, password):
 		LDAP_SEARCH_FILTER
 	)
 
-	# Set the username and passwor from the basic auth form
+	# Initialize the ALDAP object
+	# The username and password are from the Basic Authentication pop-up form
 	aldap.setUser(username, password)
 
-	# Check for required groups only if are defined
+	# Check groups only if they are defined
 	if LDAP_REQUIRED_GROUPS:
-		if not aldap.validateGroups( LDAP_REQUIRED_GROUPS.split(",") ):
+		groups = LDAP_REQUIRED_GROUPS.split(",") # Split the groups by comma
+		if not aldap.validateGroups(groups, LDAP_REQUIRED_GROUPS_CONDITIONAL):
 			return False
 
 	# Check if the username and password are valid
-	# First in the cache then in the LDAP server
+	# First check inside the cache and then in the LDAP server
 	if not cache.validate(username, password):
 		if not aldap.authenticateUser():
 			return False
@@ -91,6 +100,7 @@ def login(username, password):
 	# Include the user in the cache
 	cache.add(username, password)
 
+	# Success
 	return True
 
 # Catch-All URL
