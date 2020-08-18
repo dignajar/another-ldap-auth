@@ -57,13 +57,13 @@ class Aldap:
 		print("[INFO][GROUPS] Matched groups:",matchesGroups)
 
 		# Conditiona OR, true if just 1 group match
-		if conditional == 'or':
+		if conditional.lower() == 'or':
 			for group in groups:
 				if group in matchesGroups:
 					print("[INFO][GROUPS] One of the groups is valid for the user.")
 					return True,matchesGroups
 		# Conditiona AND, true if all the groups match
-		elif conditional == 'and':
+		elif conditional.lower() == 'and':
 			if set(groups) == set(matchesGroups):
 				print("[INFO][GROUPS] All groups are valid for the user.")
 				return True,matchesGroups
