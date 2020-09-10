@@ -1,5 +1,7 @@
 import ldap
 import time
+import re
+from itertools import repeat
 
 class Aldap:
 	def __init__(self, ldapEndpoint, dnUsername, dnPassword, serverDomain, searchBase, searchFilter):
@@ -38,21 +40,45 @@ class Aldap:
 		print("[INFO][SEARCH] Time:", time.time()-start)
 		return result
 
+	def decode(self, word:bytes):
+		return word.decode("utf-8")
+
+	def findMatch(self, matchGroup:str, userGroup:str):
+		# Extract the Common Name from the string (letters, spaces and underscores)
+		userGroup = re.match('CN=((\w*\s?_?]*)*)', userGroup).group(1)
+
+		# return match against supplied group/pattern (None if there is no match)
+		try:
+			return re.fullmatch(f'{matchGroup}.*', userGroup).group(0)
+		except:
+			return None
+
+		def decode(self, word:bytes):
+			return word.decode("utf-8")
+
 	# Validate the groups in the Active Directory tree
 	def validateGroups(self, groups, conditional):
 		tree = self.search()
+
+		# Crawl tree and extract the groups of the user
+		userGroups = []
+		for zone in tree:
+			for element in zone:
+				try: 
+					userGroups.extend(element['memberOf'])
+				except TypeError:
+					None
+		userGroups = list(map(self.decode,userGroups))
 
 		print("[INFO][GROUPS] Validating the following groups:", groups)
 		print("[INFO][GROUPS] Conditional:", conditional)
 
 		# List for the matches groups
 		matchesGroups = []
-		for listAD in tree:
-			for group in groups:
-				# Check if the user has this group
-				if group.lower() in str(listAD).lower():
-					# The user has this group include the group in the matchesGroup
-					matchesGroups.append(group)
+		for group in groups:
+			# apply find match function to each value and then remove None values
+			matches = list(filter(None,list(map(self.findMatch, repeat(group), userGroups))))
+			matchesGroups.extend(matches)
 
 		print("[INFO][GROUPS] Matched groups:",matchesGroups)
 
