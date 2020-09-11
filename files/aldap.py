@@ -1,6 +1,7 @@
 import ldap
 import time
 import re
+import logging
 from itertools import repeat
 
 class Aldap:
@@ -18,6 +19,8 @@ class Aldap:
 		self.connect = ldap.initialize(self.ldapEndpoint)
 		self.connect.set_option(ldap.OPT_REFERRALS, 0)
 		self.connect.set_option(ldap.OPT_DEBUG_LEVEL, 255)
+		
+		self.log = logging.getLogger('ALDAP')
 
 	def setUser(self, username, password):
 		self.username = username
@@ -26,7 +29,7 @@ class Aldap:
 		self.searchFilter = self.searchFilter.replace("{username}", self.username)
 
 	def search(self):
-		print("[INFO][SEARCH] Searching by filter:", self.searchFilter)
+		self.log.info(f"Searching by filter: {self.searchFilter}")
 		start = time.time()
 		result = ""
 		try:
@@ -34,10 +37,10 @@ class Aldap:
 			result = self.connect.search_s(self.searchBase, ldap.SCOPE_SUBTREE, self.searchFilter)
 			#self.connect.unbind_s()
 		except ldap.LDAPError as e:
-			print("[ERROR][SEARCH] There was an error when trying to bind.")
-			print(e)
+			self.log.error("There was an error when trying to bind.")
+			self.log.error(e)
 
-		print("[INFO][SEARCH] Time:", time.time()-start)
+		self.log.info(f"Time: {time.time()-start}")
 		return result
 
 	def decode(self, word:bytes):
@@ -70,8 +73,8 @@ class Aldap:
 					None
 		userGroups = list(map(self.decode,userGroups))
 
-		print("[INFO][GROUPS] Validating the following groups:", groups)
-		print("[INFO][GROUPS] Conditional:", conditional)
+		self.log.info(f"Validating the following groups: {groups}")
+		self.log.info(f"Conditional: {conditional}")
 
 		# List for the matches groups
 		matchedGroups = []
@@ -83,23 +86,23 @@ class Aldap:
 				matchesByGroup.append((group,matches))
 				matchedGroups.extend(matches)
 
-		print("[INFO][GROUPS] Matched groups:",matchedGroups)
+		self.log.info(f"Matched groups: {matchedGroups}")
 
 		# Conditiona OR, true if just 1 group match
 		if conditional.lower() == 'or':
 			if matchedGroups:
-				print("[INFO][GROUPS] One of the groups is valid for the user.")
+				self.log.info("One of the groups is valid for the user.")
 				return True,matchedGroups
 		# Conditiona AND, true if all the groups match
 		elif conditional.lower() == 'and':
 			if len(groups) == len(matchesByGroup):
-				print("[INFO][GROUPS] All groups are valid for the user.")
+				self.log.info("All groups are valid for the user.")
 				return True,matchedGroups
 		else:
-			print("[WARN][GROUPS] Invalid group conditional.")
+			self.log.warning("Invalid group conditional.")
 			return False,[]
 
-		print("[WARN][GROUPS] Invalid groups.")
+		self.log.warning("Invalid groups.")
 		return False,[]
 
 	def authenticateUser(self):
@@ -108,19 +111,19 @@ class Aldap:
 			# The configuration has serverDomain the username is username@domain
 			finalUsername = self.username+"@"+self.serverDomain
 
-		print("[INFO][AUTHENTICATION] Authenticating user:", finalUsername)
+		self.log.info(f"Authenticating user: {finalUsername}")
 
 		start = time.time()
 		try:
 			self.connect.simple_bind_s(finalUsername, self.password)
 			self.connect.unbind_s()
-			print("[INFO][AUTHENTICATION] Username valid:", finalUsername)
-			print("[INFO][AUTHENTICATION] Time:", time.time()-start)
+			self.log.info(f"Username valid: {finalUsername}")
+			self.log.info(f"Time: {time.time()-start}")
 			return True
 		except ldap.INVALID_CREDENTIALS:
-			print("[WARN][AUTHENTICATION] Invalid credentials.")
+			self.log.warning("Invalid credentials.")
 		except ldap.LDAPError as e:
-			print("[ERROR][AUTHENTICATION] There was an error trying to bind.")
-			print(e)
+			self.log.error("There was an error trying to bind.")
+			self.log.error(e)
 
 		return False
