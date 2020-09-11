@@ -25,7 +25,7 @@ The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username,
 - `LDAP_REQUIRED_GROUPS_CONDITIONAL` **(Optional, default="and")**, you can set the conditional to match all the groups on the list or just one of them. To match all of them use `and` and for match just one use `or`. Ex: `and`
 - `CACHE_EXPIRATION` **(Optional, default=5)** Expiration time in minutes for the cache. Ex: `10`
 - `LOG_LEVEL` **(Optional, default=INFO)** Logger level
-- `LOG_FORMAT` **(Optional, default=TEX, values=[ TEXT, JSON ])** Options are:  
+- `LOG_FORMAT` **(Optional, default=TEXT, values=[ TEXT, JSON ])** It defines the output format of the logger
 
 ### HTTP request headers
 The variables send via HTTP headers take precedence over environment variables.
