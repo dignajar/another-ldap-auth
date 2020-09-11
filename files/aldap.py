@@ -74,25 +74,27 @@ class Aldap:
 		print("[INFO][GROUPS] Conditional:", conditional)
 
 		# List for the matches groups
-		matchesGroups = []
+		matchedGroups = []
+		matchesByGroup = []
 		for group in groups:
 			# apply find match function to each value and then remove None values
 			matches = list(filter(None,list(map(self.findMatch, repeat(group), userGroups))))
-			matchesGroups.extend(matches)
+			if matches: 
+				matchesByGroup.append((group,matches))
+				matchedGroups.extend(matches)
 
-		print("[INFO][GROUPS] Matched groups:",matchesGroups)
+		print("[INFO][GROUPS] Matched groups:",matchedGroups)
 
 		# Conditiona OR, true if just 1 group match
 		if conditional.lower() == 'or':
-			for group in groups:
-				if group in matchesGroups:
-					print("[INFO][GROUPS] One of the groups is valid for the user.")
-					return True,matchesGroups
+			if matchedGroups:
+				print("[INFO][GROUPS] One of the groups is valid for the user.")
+				return True,matchedGroups
 		# Conditiona AND, true if all the groups match
 		elif conditional.lower() == 'and':
-			if set(groups) == set(matchesGroups):
+			if len(groups) == len(matchesByGroup):
 				print("[INFO][GROUPS] All groups are valid for the user.")
-				return True,matchesGroups
+				return True,matchedGroups
 		else:
 			print("[WARN][GROUPS] Invalid group conditional.")
 			return False,[]
