@@ -1,3 +1,4 @@
+import logging, sys
 from flask import Flask
 from flask import request
 from flask import g
@@ -5,6 +6,28 @@ from flask_httpauth import HTTPBasicAuth
 from aldap import Aldap
 from cache import Cache
 from os import environ
+
+# --- Logging --------------------------------------------------------------------
+loglevel_map = { 'DEBUG': logging.DEBUG,
+				 'INFO': logging.INFO,
+				 'WARN': logging.WARN,
+				 'ERROR': logging.ERROR }
+
+logformat_map = { 'JSON': "{'time':'%(asctime)s', 'name': '%(name)s', 'level': '%(levelname)s', 'message': '%(message)s'}",
+				  'TEXT': "%(asctime)s - %(name)s - %(levelname)s - %(message)s" }
+
+try:
+	LOG_FORMAT = environ["LOG_FORMAT"]
+except:
+	LOG_FORMAT = 'TEXT'
+
+try:
+	LOG_LEVEL = environ["LOG_LEVEL"]
+except:
+	LOG_LEVEL = 'INFO'
+
+logging.basicConfig(stream=sys.stdout, level=loglevel_map[LOG_LEVEL], format=logformat_map[LOG_FORMAT])
+log = logging.getLogger('MAIN')			 
 
 # --- Flask --------------------------------------------------------------------
 app = Flask(__name__)
@@ -19,7 +42,7 @@ cache = Cache(CACHE_EXPIRATION)
 @auth.verify_password
 def login(username, password):
 	if not username or not password:
-		print("[ERROR] Username or password empty.")
+		log.error("Username or password empty.")
 		return False
 
 	try:
@@ -68,7 +91,7 @@ def login(username, password):
 		elif "LDAP_SERVER_DOMAIN" in environ:
 			LDAP_SERVER_DOMAIN = environ["LDAP_SERVER_DOMAIN"]
 	except KeyError as e:
-		print("[ERROR] Invalid parameter: ", e)
+		log.error(f"Invalid parameter: {e}")
 		return False
 
 	# Create the ALDAP object
