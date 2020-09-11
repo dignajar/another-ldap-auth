@@ -38,7 +38,6 @@ The variables send via HTTP headers take precedence over environment variables.
 - `Ldap-Server-Domain` **(Optional)**
 - `Ldap-Required-Groups` **(Optional)**
 - `Ldap-Required-Groups-Conditional` **(Optional)**
-- `Ldap-Required-Groups-Conditional` **(Optional)**
 - `x-forwarded-client-cert` Contains a client certificate ( previously validated by nginx )
 
 ### HTTP response headers
