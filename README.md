@@ -21,11 +21,13 @@ The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username,
 - `LDAP_SEARCH_BASE` Ex: `DC=TESTMYLDAP,DC=COM`
 - `LDAP_SEARCH_FILTER` Filter to search, for Microsoft Active Directory usually you can use `sAMAccountName`. Ex: `(sAMAccountName={username})`
 - `LDAP_SERVER_DOMAIN` **(Optional)**, for Microsoft Active Directory usually need the domain name for authenticate the user. Ex: `TESTMYLDAP.COM`
-- `LDAP_REQUIRED_GROUPS` **(Optional)**, required groups are case insensitive (`DevOps` is the same as `DEVOPS`), you can send a list separated by commas, try first without required groups. Ex: `'DevOps', 'DevOps_QA'`
+- `LDAP_REQUIRED_GROUPS` **(Optional)**, required groups are case sensitive (`DevOps` != `DEVOPS`), supports regular expression, you can send a list separated by commas, try first without required groups. Ex: `'DevOps production environment', 'DevOps testing environment', 'Developers .* environment'`
 - `LDAP_REQUIRED_GROUPS_CONDITIONAL` **(Optional, default="and")**, you can set the conditional to match all the groups on the list or just one of them. To match all of them use `and` and for match just one use `or`. Ex: `and`
 - `CACHE_EXPIRATION` **(Optional, default=5)** Expiration time in minutes for the cache. Ex: `10`
 
 ### HTTP request headers
+The variables send via HTTP headers take precedence over environment variables.
+
 - `Ldap-Endpoint`
 - `Ldap-Manager-Dn-Username`
 - `Ldap-Manager-Password`
@@ -81,8 +83,9 @@ location = /another_ldap_auth {
 ```
 
 ## Deploy in Kubernetes with Nginx ingress controller
+The following manifests for K8s deploys **Another LDAP Authentication** in the namespace `ingress-nginx` and expose the service in the cluster at the following address `http://another-ldap-auth.ingress-nginx`.
 
-Another LDAP Auth deployment manifest, `another-deployment.yaml`.
+Deployment manifest, `another-deployment.yaml`.
 ```
 ---
 apiVersion: apps/v1
@@ -104,6 +107,7 @@ spec:
     spec:
       containers:
         - image: dignajar/another-ldap-auth:latest
+          imagePullPolicy: Always
           name: another-ldap-auth
           ports:
             - name: http
@@ -126,7 +130,8 @@ spec:
                   key: LDAP_MANAGER_PASSWORD
 ```
 
-Another LDAP Auth secret manifest, `another-secret.yaml`.
+Secret manifest, `another-secret.yaml`.
+Remember the password need to be encode in base64.
 ```
 ---
 apiVersion: v1
@@ -139,7 +144,7 @@ data:
   LDAP_MANAGER_PASSWORD: <your-password-in-base64>
 ```
 
-Another LDAP Auth service manifest, `another-service.yaml`.
+Service manifest, `another-service.yaml`.
 ```
 ---
 kind: Service
@@ -158,7 +163,8 @@ spec:
       targetPort: 9000
 ```
 
-Ingress manifest for the application you want to add authentication. You can remove the un-comment and send headers as variables such as `Required groups`.
+Ingress manifest for the application you want to add authentication.
+You can remove the comment `#` and send headers as variables such as `Required groups`.
 ```
 ---
 apiVersion: extensions/v1beta1
