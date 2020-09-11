@@ -1,4 +1,4 @@
-import logging, sys
+import re, logging, sys
 from flask import Flask
 from flask import request
 from flask import g
@@ -6,6 +6,9 @@ from flask_httpauth import HTTPBasicAuth
 from aldap import Aldap
 from cache import Cache
 from os import environ
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from urllib.parse import unquote_plus
 
 # --- Logging --------------------------------------------------------------------
 loglevel_map = { 'DEBUG': logging.DEBUG,
@@ -41,9 +44,18 @@ cache = Cache(CACHE_EXPIRATION)
 
 @auth.verify_password
 def login(username, password):
-	if not username or not password:
-		log.error("Username or password empty.")
-		return False
+	log.debug(f"Received Headers: {str(request.headers.keys)}")
+
+	# Either Client certificate is in the header (previously validated by nginx) or user and pass
+	CLIENT_CERT = request.headers.get("x-forwarded-client-cert")
+	if  CLIENT_CERT:
+		username = getUserFromCertificate(CLIENT_CERT)
+		password = None
+	else:
+		log.info("No client certificate provided in the header")
+		if not username or not password:
+			log.error("Username or password empty")
+			return False
 
 	try:
 		# Get parameters from HTTP headers or from environment variables
@@ -117,11 +129,9 @@ def login(username, password):
 		if not validGroups:
 			return False
 
-	# Check if the username and password are valid
-	# First check inside the cache and then in the LDAP server
-	if not cache.validate(username, password):
-		if not aldap.authenticateUser():
-			return False
+	# Check authentication: 1st check client certificate, second cache, third authenticate in ldap
+	if not CLIENT_CERT and not cache.validate(username, password) and not aldap.authenticateUser():
+		return False
 
 	# Include the user in the cache
 	cache.add(username, password)
@@ -130,6 +140,19 @@ def login(username, password):
 	g.username = username # Set the username to send in the headers response
 	g.matchesGroups = ','.join(matchesGroups) # Set the matches groups to send in the headers response
 	return True
+
+
+def getUserFromCertificate(CLIENT_CERT):
+	log.debug(f'Received Certificate:', CLIENT_CERT)
+	cert_str = unquote_plus(CLIENT_CERT)
+	log.debug("Certificate Found")
+	cert = x509.load_pem_x509_certificate(bytes(cert_str, 'utf-8'), default_backend())
+	subject = str(cert.subject)
+	log.debug(f'The issuer of the certificate is: {str(cert.issuer)}')
+	log.debug(f'The subject of the certificate is: {str(cert.subject)}')
+
+	p = re.compile("<Name\(CN=(.*)\)>")
+	return p.search(subject).group(1)
 
 # Catch-All URL
 @app.route('/', defaults={'path': ''})
