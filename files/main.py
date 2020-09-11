@@ -17,12 +17,12 @@ logformat_map = { 'JSON': "{'time':'%(asctime)s', 'name': '%(name)s', 'level': '
 				  'TEXT': "%(asctime)s - %(name)s - %(levelname)s - %(message)s" }
 
 try:
-	LOG_FORMAT = environ["LOGFORMAT"]
+	LOG_FORMAT = environ["LOG_FORMAT"]
 except:
 	LOG_FORMAT = 'TEXT'
 
 try:
-	LOG_LEVEL = environ["LOGLEVEL"]
+	LOG_LEVEL = environ["LOG_LEVEL"]
 except:
 	LOG_LEVEL = 'INFO'
 
