@@ -27,7 +27,7 @@ except:
 	LOG_LEVEL = 'INFO'
 
 logging.basicConfig(stream=sys.stdout, level=loglevel_map[LOG_LEVEL], format=logformat_map[LOG_FORMAT])
-log = logging.getLogger('MAIN')			 
+log = logging.getLogger('MAIN')
 
 # --- Flask --------------------------------------------------------------------
 app = Flask(__name__)
@@ -36,7 +36,7 @@ auth = HTTPBasicAuth()
 # Cache
 CACHE_EXPIRATION = 5 # Expiration in minutes
 if "CACHE_EXPIRATION" in environ:
-	CACHE_EXPIRATION = environ["CACHE_EXPIRATION"]
+	CACHE_EXPIRATION = int(environ["CACHE_EXPIRATION"])
 cache = Cache(CACHE_EXPIRATION)
 
 @auth.verify_password
