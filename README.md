@@ -15,18 +15,20 @@ The parameters can be sent via environment variables or via HTTP headers, also y
 The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username, you can do something like this `(sAMAccountName={username})` and `{username}` is going to be replaced by the username typed in the login form.
 
 ### Environment variables
-- `LDAP_ENDPOINT` LDAP URL with the port number. Ex: `ldaps://testmyldap.com:636`
-- `LDAP_MANAGER_DN_USERNAME` Username to bind and search in the LDAP tree. Ex: `CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM`
-- `LDAP_MANAGER_PASSWORD` Password for the bind user.
-- `LDAP_SEARCH_BASE` Ex: `DC=TESTMYLDAP,DC=COM`
-- `LDAP_SEARCH_FILTER` Filter to search, for Microsoft Active Directory usually you can use `sAMAccountName`. Ex: `(sAMAccountName={username})`
-- `LDAP_SERVER_DOMAIN` **(Optional)**, for Microsoft Active Directory usually need the domain name for authenticate the user. Ex: `TESTMYLDAP.COM`
-- `LDAP_REQUIRED_GROUPS` **(Optional)**, required groups supports regular expressions, you can send a list separated by commas, try first without required groups. Ex: `'DevOps production environment', 'DevOps testing environment', 'Developers .* environment'`
-- `LDAP_REQUIRED_GROUPS_CONDITIONAL` **(Optional, default="and", values=[ and, or ])**, you can set the conditional to match all the groups on the list or just one of them. To match all of them use `and` and for match just one use `or`. Ex: `and`
-- `LDAP_REQUIRED_GROUPS_CASE_SENSITIVE` **(Optional, default="enabled", values=[ enabled, disabled ])**, you can enabled or disabled case sensitive groups matches.
-- `CACHE_EXPIRATION` **(Optional, default=5)** Expiration time in minutes for the cache. Ex: `10`
-- `LOG_LEVEL` **(Optional, default=INFO)** Logger level
-- `LOG_FORMAT` **(Optional, default=TEXT, values=[ TEXT, JSON ])** It defines the output format of the logger
+| Key                                 | Default   | Values                           | Description                                                                            | Example |
+| :---                                | :---:     | :---                             | :---                                                                                   | |
+| LDAP_ENDPOINT                       |           |                                  | LDAP URL with the port number.                                                         | `ldaps://testmyldap.com:636` |
+| LDAP_MANAGER_DN_USERNAME            |           |                                  | Username to bind and search in the LDAP tree.                                          | `CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM` |
+| LDAP_MANAGER_PASSWORD               |           |                                  | Password for the bind user.                                                            | |
+| LDAP_SEARCH_BASE                    |           |                                  | Description | `DC=TESTMYLDAP,DC=COM`                                                   | |
+| LDAP_SEARCH_FILTER                  |           |                                  | Filter to search, for Microsoft Active Directory usually you can use `sAMAccountName`. | `(sAMAccountName={username})` |
+| LDAP_SERVER_DOMAIN **(Optional)**   |           |                                  | Microsoft Active Directory usually need the domain name for authenticate the user.     | `TESTMYLDAP.COM` |
+| LDAP_REQUIRED_GROUPS **(Optional)** |           |                                  | supports regular expressions, you can send a list separated by commas                  | `'DevOps production environment', 'DevOps testing environment', 'Developers .* environment'` |
+| LDAP_REQUIRED_GROUPS_CONDITIONAL    | `and`     | `and`, `or`                      | conditional to match all the groups on the list or just one of them.                   | `or` |
+| LDAP_REQUIRED_GROUPS_CASE_SENSITIVE | `enabled` | `enabled`, `disabled`            | Enabled or disabled case sensitive groups matches                                      | `disabled` |
+| CACHE_EXPIRATION                    | `5`       |                                  | Expiration time in minutes for the cache.                                              | `10` |
+| LOG_LEVEL                           | `INFO`    | `DEBUG`, `INFO`, `WARN`, `ERROR` | Logger level.                                                                          |  |
+| LOG_FORMAT                          | `TEXT`    | `TEXT`, `JSON`                   | It defines the output format of the logger.                                            |  |
 
 ### HTTP request headers
 The variables send via HTTP headers take precedence over environment variables.
