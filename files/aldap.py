@@ -82,7 +82,7 @@ class Aldap:
 		matchesByGroup = []
 		for group in groups:
 			# apply find match function to each value and then remove None values
-			matches = list(filter(None,list(map(self.findMatch, repeat(group), userGroups, caseSensitive=='enabled'))))
+			matches = list(filter(None,list(map(self.findMatch, repeat(group), userGroups, caseSensitive))))
 			if matches:
 				matchesByGroup.append((group,matches))
 				matchedGroups.extend(matches)

@@ -120,7 +120,7 @@ def login(username, password):
 	if LDAP_REQUIRED_GROUPS:
 		groups = LDAP_REQUIRED_GROUPS.split(",") # Split the groups by comma and trim
 		groups = [x.strip() for x in groups] # Remove spaces
-		validGroups, matchesGroups = aldap.validateGroups(groups, LDAP_REQUIRED_GROUPS_CONDITIONAL, LDAP_REQUIRED_GROUPS_CASE_SENSITIVE)
+		validGroups, matchesGroups = aldap.validateGroups(groups, LDAP_REQUIRED_GROUPS_CONDITIONAL, LDAP_REQUIRED_GROUPS_CASE_SENSITIVE=='enabled')
 		if not validGroups:
 			return False
 
