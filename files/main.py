@@ -108,7 +108,9 @@ def login(username, password):
 		LDAP_MANAGER_PASSWORD,
 		LDAP_SERVER_DOMAIN,
 		LDAP_SEARCH_BASE,
-		LDAP_SEARCH_FILTER
+		LDAP_SEARCH_FILTER,
+		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE=='enabled',
+		LDAP_REQUIRED_GROUPS_CONDITIONAL
 	)
 
 	# Initialize the ALDAP object
@@ -120,7 +122,7 @@ def login(username, password):
 	if LDAP_REQUIRED_GROUPS:
 		groups = LDAP_REQUIRED_GROUPS.split(",") # Split the groups by comma and trim
 		groups = [x.strip() for x in groups] # Remove spaces
-		validGroups, matchesGroups = aldap.validateGroups(groups, LDAP_REQUIRED_GROUPS_CONDITIONAL, LDAP_REQUIRED_GROUPS_CASE_SENSITIVE=='enabled')
+		validGroups, matchesGroups = aldap.validateGroups(groups)
 		if not validGroups:
 			return False
 
