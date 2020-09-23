@@ -5,7 +5,7 @@ import logging
 from itertools import repeat
 
 class Aldap:
-	def __init__(self, ldapEndpoint, dnUsername, dnPassword, serverDomain, searchBase, searchFilter):
+	def __init__(self, ldapEndpoint, dnUsername, dnPassword, serverDomain, searchBase, searchFilter, groupCaseSensitive, groupConditional):
 		self.ldapEndpoint = ldapEndpoint
 		self.searchBase = searchBase
 		self.dnUsername = dnUsername
@@ -14,6 +14,8 @@ class Aldap:
 		self.searchFilter = searchFilter
 		self.username = ''
 		self.password = ''
+		self.groupCaseSensitive = groupCaseSensitive
+		self.groupConditional = groupConditional.lower()
 
 		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
 		self.connect = ldap.initialize(self.ldapEndpoint)
@@ -46,11 +48,11 @@ class Aldap:
 	def decode(self, word:bytes):
 		return word.decode("utf-8")
 
-	def findMatch(self, matchGroup:str, userGroup:str, caseSensitive:bool):
+	def findMatch(self, matchGroup:str, userGroup:str):
 		# Extract the Common Name from the string (letters, spaces and underscores)
 		userGroup = re.match('CN=((\w*\s?_?]*)*)', userGroup).group(1)
 
-		if not caseSensitive:
+		if not self.groupCaseSensitive:
 			userGroup = userGroup.lower()
 			matchGroup = matchGroup.lower()
 
@@ -61,7 +63,7 @@ class Aldap:
 			return None
 
 	# Validate the groups in the Active Directory tree
-	def validateGroups(self, groups, conditional, caseSensitive):
+	def validateGroups(self, groups):
 		tree = self.search()
 
 		# Crawl tree and extract the groups of the user
@@ -75,7 +77,7 @@ class Aldap:
 		userGroups = list(map(self.decode,userGroups))
 
 		self.log.info(f"Validating the following groups: {groups}")
-		self.log.info(f"Conditional: {conditional}")
+		self.log.info(f"Conditional: {self.groupConditional}")
 
 		# List for the matches groups
 		matchedGroups = []
@@ -90,12 +92,12 @@ class Aldap:
 		self.log.info(f"Matched groups: {matchedGroups}")
 
 		# Conditiona OR, true if just 1 group match
-		if conditional.lower() == 'or':
+		if self.groupConditional == 'or':
 			if matchedGroups:
 				self.log.info("One of the groups is valid for the user.")
 				return True,matchedGroups
 		# Conditiona AND, true if all the groups match
-		elif conditional.lower() == 'and':
+		elif self.groupConditional == 'and':
 			if len(groups) == len(matchesByGroup):
 				self.log.info("All groups are valid for the user.")
 				return True,matchedGroups
