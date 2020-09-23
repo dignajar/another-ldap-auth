@@ -1,0 +1,15 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: another-ldap-auth
+  namespace: ingress-nginx
+spec:
+  type: ClusterIP
+  selector:
+    app: another-ldap-auth
+  ports:
+    - name: another-ldap-auth
+      port: 80
+      protocol: TCP
+      targetPort: 9000

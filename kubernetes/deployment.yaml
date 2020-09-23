@@ -1,0 +1,41 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: another-ldap-auth
+  namespace: ingress-nginx
+  labels:
+    app: another-ldap-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: another-ldap-auth
+  template:
+    metadata:
+      labels:
+        app: another-ldap-auth
+    spec:
+      containers:
+        - image: dignajar/another-ldap-auth:latest
+          imagePullPolicy: Always
+          name: another-ldap-auth
+          ports:
+            - name: http
+              containerPort: 9000
+          env:
+            - name: LDAP_ENDPOINT
+              value: "ldaps://testmyldap.com:636"
+            - name: LDAP_MANAGER_DN_USERNAME
+              value: "CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM"
+            - name: LDAP_SERVER_DOMAIN
+              value: "TESTMYLDAP"
+            - name: LDAP_SEARCH_BASE
+              value: "DC=TESTMYLDAP,DC=COM"
+            - name: LDAP_SEARCH_FILTER
+              value: "(sAMAccountName={username})"
+            - name: LDAP_MANAGER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: another-ldap-auth
+                  key: LDAP_MANAGER_PASSWORD

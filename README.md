@@ -61,15 +61,15 @@ Change the environment variables with your setup.
 
 ```
 docker run -d \
-        -e LDAP_ENDPOINT='ldaps://testmyldap.com:636' \
-        -e LDAP_MANAGER_DN_USERNAME='CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM' \
-        -e LDAP_MANAGER_PASSWORD='MasterpasswordNoHack123' \
-        -e LDAP_SERVER_DOMAIN='TESTMYLDAP.COM' \
-        -e LDAP_SEARCH_BASE='DC=TESTMYLDAP,DC=COM' \
-        -e LDAP_SEARCH_FILTER='(sAMAccountName={username})' \
-        -p 9000:9000 \
-        --name another_ldap_auth \
-        dignajar/another-ldap-auth:latest
+    -e LDAP_ENDPOINT='ldaps://testmyldap.com:636' \
+    -e LDAP_MANAGER_DN_USERNAME='CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM' \
+    -e LDAP_MANAGER_PASSWORD='MasterpasswordNoHack123' \
+    -e LDAP_SERVER_DOMAIN='TESTMYLDAP.COM' \
+    -e LDAP_SEARCH_BASE='DC=TESTMYLDAP,DC=COM' \
+    -e LDAP_SEARCH_FILTER='(sAMAccountName={username})' \
+    -p 9000:9000 \
+    --name another_ldap_auth \
+    dignajar/another-ldap-auth:latest
 ```
 
 **Another LDAP Authentication** now is running on `http://localhost:9000`.
@@ -94,89 +94,19 @@ location = /another_ldap_auth {
 }
 ```
 
+Now you can access to your website wich is going to be something like this `http://myserver.com/private/` and Nginx will request you to write the username and password.
+
 ## Deploy in Kubernetes with Nginx ingress controller
-The following manifests for K8s deploys **Another LDAP Authentication** in the namespace `ingress-nginx` and expose the service in the cluster at the following address `http://another-ldap-auth.ingress-nginx`.
+Get the K8s manifest from the folder `/kubernetes` from this repository.
 
-Deployment manifest, `another-deployment.yaml`.
-```
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: another-ldap-auth
-  namespace: ingress-nginx
-  labels:
-    app: another-ldap-auth
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: another-ldap-auth
-  template:
-    metadata:
-      labels:
-        app: another-ldap-auth
-    spec:
-      containers:
-        - image: dignajar/another-ldap-auth:latest
-          imagePullPolicy: Always
-          name: another-ldap-auth
-          ports:
-            - name: http
-              containerPort: 9000
-          env:
-            - name: LDAP_ENDPOINT
-              value: "ldaps://testmyldap.com:636"
-            - name: LDAP_MANAGER_DN_USERNAME
-              value: "CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM"
-            - name: LDAP_SERVER_DOMAIN
-              value: "TESTMYLDAP"
-            - name: LDAP_SEARCH_BASE
-              value: "DC=TESTMYLDAP,DC=COM"
-            - name: LDAP_SEARCH_FILTER
-              value: "(sAMAccountName={username})"
-            - name: LDAP_MANAGER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: another-ldap-auth
-                  key: LDAP_MANAGER_PASSWORD
-```
+The manifests for K8s helps to deploy **Another LDAP Authentication** in the namespace `ingress-nginx` and expose the service in the cluster at the following address `http://another-ldap-auth.ingress-nginx`.
 
-Secret manifest, `another-secret.yaml`.
-Remember the password need to be encode in base64.
-```
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: another-ldap-auth
-  namespace: ingress-nginx
-type: Opaque
-data:
-  LDAP_MANAGER_PASSWORD: <your-password-in-base64>
-```
+Please change the environment variables from the manifest and the secret for the bind username.
 
-Service manifest, `another-service.yaml`.
-```
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: another-ldap-auth
-  namespace: ingress-nginx
-spec:
-  type: ClusterIP
-  selector:
-    app: another-ldap-auth
-  ports:
-    - name: another-ldap-auth
-      port: 80
-      protocol: TCP
-      targetPort: 9000
-```
+After you have running **Another LDAP Authentication** in your Kubernetes, you can modify the ingress manifest for the application you want to protect.
 
-Ingress manifest for the application you want to add authentication.
 You can remove the comment `#` and send headers as variables such as `Required groups`.
+
 ```
 ---
 apiVersion: extensions/v1beta1
@@ -185,7 +115,8 @@ metadata:
   name: demo-webserver
   namespace: demo
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: http://another-ldap-auth.ingress-nginx.svc.cluster.local
+    nginx.ingress.kubernetes.io/auth-url: http://another-ldap-auth.ingress-nginx
+
     # nginx.ingress.kubernetes.io/auth-snippet: |
     #   proxy_set_header Ldap-Required-Groups "<SOME GROUP>";
     #   proxy_set_header Ldap-Required-Groups-Conditional "or";
