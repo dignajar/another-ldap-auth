@@ -19,7 +19,7 @@ class Aldap:
 		self.connect = ldap.initialize(self.ldapEndpoint)
 		self.connect.set_option(ldap.OPT_REFERRALS, 0)
 		self.connect.set_option(ldap.OPT_DEBUG_LEVEL, 255)
-		
+
 		self.log = logging.getLogger('ALDAP')
 
 	def setUser(self, username, password):
@@ -46,9 +46,13 @@ class Aldap:
 	def decode(self, word:bytes):
 		return word.decode("utf-8")
 
-	def findMatch(self, matchGroup:str, userGroup:str):
+	def findMatch(self, matchGroup:str, userGroup:str, caseSensitive:bool):
 		# Extract the Common Name from the string (letters, spaces and underscores)
 		userGroup = re.match('CN=((\w*\s?_?]*)*)', userGroup).group(1)
+
+		if not caseSensitive:
+			userGroup = userGroup.lower()
+			matchGroup = matchGroup.lower()
 
 		# return match against supplied group/pattern (None if there is no match)
 		try:
@@ -56,18 +60,15 @@ class Aldap:
 		except:
 			return None
 
-		def decode(self, word:bytes):
-			return word.decode("utf-8")
-
 	# Validate the groups in the Active Directory tree
-	def validateGroups(self, groups, conditional):
+	def validateGroups(self, groups, conditional, caseSensitive):
 		tree = self.search()
 
 		# Crawl tree and extract the groups of the user
 		userGroups = []
 		for zone in tree:
 			for element in zone:
-				try: 
+				try:
 					userGroups.extend(element['memberOf'])
 				except TypeError:
 					None
@@ -81,8 +82,8 @@ class Aldap:
 		matchesByGroup = []
 		for group in groups:
 			# apply find match function to each value and then remove None values
-			matches = list(filter(None,list(map(self.findMatch, repeat(group), userGroups))))
-			if matches: 
+			matches = list(filter(None,list(map(self.findMatch, repeat(group), userGroups, caseSensitive))))
+			if matches:
 				matchesByGroup.append((group,matches))
 				matchedGroups.extend(matches)
 

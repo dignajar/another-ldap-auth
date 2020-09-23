@@ -21,8 +21,9 @@ The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username,
 - `LDAP_SEARCH_BASE` Ex: `DC=TESTMYLDAP,DC=COM`
 - `LDAP_SEARCH_FILTER` Filter to search, for Microsoft Active Directory usually you can use `sAMAccountName`. Ex: `(sAMAccountName={username})`
 - `LDAP_SERVER_DOMAIN` **(Optional)**, for Microsoft Active Directory usually need the domain name for authenticate the user. Ex: `TESTMYLDAP.COM`
-- `LDAP_REQUIRED_GROUPS` **(Optional)**, required groups are case sensitive and support regular expressions, you can send a list separated by commas, try first without required groups. Ex: `'DevOps production environment', 'DevOps testing environment', 'Developers .* environment'`
-- `LDAP_REQUIRED_GROUPS_CONDITIONAL` **(Optional, default="and")**, you can set the conditional to match all the groups on the list or just one of them. To match all of them use `and` and for match just one use `or`. Ex: `and`
+- `LDAP_REQUIRED_GROUPS` **(Optional)**, required groups supports regular expressions, you can send a list separated by commas, try first without required groups. Ex: `'DevOps production environment', 'DevOps testing environment', 'Developers .* environment'`
+- `LDAP_REQUIRED_GROUPS_CONDITIONAL` **(Optional, default="and", values=[ and, or ])**, you can set the conditional to match all the groups on the list or just one of them. To match all of them use `and` and for match just one use `or`. Ex: `and`
+- `LDAP_REQUIRED_GROUPS_CASE_SENSITIVE` **(Optional, default="enabled", values=[ enabled, disabled ])**, you can enabled or disabled case sensitive groups matches.
 - `CACHE_EXPIRATION` **(Optional, default=5)** Expiration time in minutes for the cache. Ex: `10`
 - `LOG_LEVEL` **(Optional, default=INFO)** Logger level
 - `LOG_FORMAT` **(Optional, default=TEXT, values=[ TEXT, JSON ])** It defines the output format of the logger
