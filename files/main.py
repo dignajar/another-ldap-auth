@@ -85,11 +85,18 @@ def login(username, password):
 		elif "LDAP_REQUIRED_GROUPS_CONDITIONAL" in environ:
 			LDAP_REQUIRED_GROUPS_CONDITIONAL = environ["LDAP_REQUIRED_GROUPS_CONDITIONAL"]
 
+		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = "enabled" # The default is "enabled", another option is "disabled"
+		if "Ldap-Required-Groups-Case-Sensitive" in request.headers:
+			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = request.headers["Ldap-Required-Groups-Case-Sensitive"]
+		elif "LDAP_REQUIRED_GROUPS_CASE_SENSITIVE" in environ:
+			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = environ["LDAP_REQUIRED_GROUPS_CASE_SENSITIVE"]
+
 		LDAP_SERVER_DOMAIN = ""
 		if "Ldap-Server-Domain" in request.headers:
 			LDAP_SERVER_DOMAIN = request.headers["Ldap-Server-Domain"]
 		elif "LDAP_SERVER_DOMAIN" in environ:
 			LDAP_SERVER_DOMAIN = environ["LDAP_SERVER_DOMAIN"]
+
 	except KeyError as e:
 		log.error(f"Invalid parameter: {e}")
 		return False
@@ -113,7 +120,7 @@ def login(username, password):
 	if LDAP_REQUIRED_GROUPS:
 		groups = LDAP_REQUIRED_GROUPS.split(",") # Split the groups by comma and trim
 		groups = [x.strip() for x in groups] # Remove spaces
-		validGroups, matchesGroups = aldap.validateGroups(groups, LDAP_REQUIRED_GROUPS_CONDITIONAL)
+		validGroups, matchesGroups = aldap.validateGroups(groups, LDAP_REQUIRED_GROUPS_CONDITIONAL, LDAP_REQUIRED_GROUPS_CASE_SENSITIVE)
 		if not validGroups:
 			return False
 
