@@ -6,6 +6,10 @@
 
 **Another LDAP Authentication** it's prepared to run inside a Docker container, also you can run the Python script without the Docker container. Supports `ldap` and `ldaps` and provide a simple cache.
 
+[![Docker Hub](https://img.shields.io/badge/Docker-Hub-blue.svg)](https://hub.docker.com/r/dignajar/another-ldap-auth)
+
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Deployment-blue.svg)](https://github.com/dignajar/another-ldap-auth#deploy-in-kubernetes-with-nginx-ingress-controller)
+
 ## Diagram
 ![Another LDAP Authentication](https://i.ibb.co/Fn1ncbP/another-ldap-authentication.jpg)
 
