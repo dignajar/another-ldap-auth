@@ -1,4 +1,5 @@
-import logging, sys
+import sys
+import json
 from flask import Flask
 from flask import request
 from flask import g
@@ -6,43 +7,25 @@ from flask_httpauth import HTTPBasicAuth
 from aldap import Aldap
 from cache import Cache
 from os import environ
+from logs import Logs
 
-# --- Logging --------------------------------------------------------------------
-loglevel_map = { 'DEBUG': logging.DEBUG,
-				 'INFO': logging.INFO,
-				 'WARN': logging.WARN,
-				 'ERROR': logging.ERROR }
+# --- Logging -----------------------------------------------------------------
+logs = Logs('main')
 
-logformat_map = { 'JSON': "{'time':'%(asctime)s', 'name': '%(name)s', 'level': '%(levelname)s', 'message': '%(message)s'}",
-				  'TEXT': "%(asctime)s - %(name)s - %(levelname)s - %(message)s" }
-
-try:
-	LOG_FORMAT = environ["LOG_FORMAT"]
-except:
-	LOG_FORMAT = 'TEXT'
-
-try:
-	LOG_LEVEL = environ["LOG_LEVEL"]
-except:
-	LOG_LEVEL = 'INFO'
-
-logging.basicConfig(stream=sys.stdout, level=loglevel_map[LOG_LEVEL], format=logformat_map[LOG_FORMAT])
-log = logging.getLogger('MAIN')
-
-# --- Flask --------------------------------------------------------------------
-app = Flask(__name__)
-auth = HTTPBasicAuth()
-
-# Cache
-CACHE_EXPIRATION = 5 # Expiration in minutes
+# --- Cache -------------------------------------------------------------------
+CACHE_EXPIRATION = 5  # Expiration in minutes
 if "CACHE_EXPIRATION" in environ:
 	CACHE_EXPIRATION = int(environ["CACHE_EXPIRATION"])
 cache = Cache(CACHE_EXPIRATION)
 
+# --- Flask -------------------------------------------------------------------
+app = Flask(__name__)
+auth = HTTPBasicAuth()
+
 @auth.verify_password
 def login(username, password):
 	if not username or not password:
-		log.error("Username or password empty.")
+		logs.error({'message': 'Username or password empty.'})
 		return False
 
 	try:
@@ -79,26 +62,27 @@ def login(username, password):
 		elif "LDAP_REQUIRED_GROUPS" in environ:
 			LDAP_REQUIRED_GROUPS = environ["LDAP_REQUIRED_GROUPS"]
 
-		LDAP_REQUIRED_GROUPS_CONDITIONAL = "and" # The default is "and", another option is "or"
+		# The default is "and", another option is "or"
+		LDAP_REQUIRED_GROUPS_CONDITIONAL = "and"
 		if "Ldap-Required-Groups-Conditional" in request.headers:
 			LDAP_REQUIRED_GROUPS_CONDITIONAL = request.headers["Ldap-Required-Groups-Conditional"]
 		elif "LDAP_REQUIRED_GROUPS_CONDITIONAL" in environ:
 			LDAP_REQUIRED_GROUPS_CONDITIONAL = environ["LDAP_REQUIRED_GROUPS_CONDITIONAL"]
 
-		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = "enabled" # The default is "enabled", another option is "disabled"
+		# The default is "enabled", another option is "disabled"
+		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = "enabled"
 		if "Ldap-Required-Groups-Case-Sensitive" in request.headers:
-			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = request.headers["Ldap-Required-Groups-Case-Sensitive"]
+			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = request.headers["Ldap-Required-Groups-Case-Sensitive"] =='enabled'
 		elif "LDAP_REQUIRED_GROUPS_CASE_SENSITIVE" in environ:
-			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = environ["LDAP_REQUIRED_GROUPS_CASE_SENSITIVE"]
+			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = environ["LDAP_REQUIRED_GROUPS_CASE_SENSITIVE"] =='enabled'
 
 		LDAP_SERVER_DOMAIN = ""
 		if "Ldap-Server-Domain" in request.headers:
 			LDAP_SERVER_DOMAIN = request.headers["Ldap-Server-Domain"]
 		elif "LDAP_SERVER_DOMAIN" in environ:
 			LDAP_SERVER_DOMAIN = environ["LDAP_SERVER_DOMAIN"]
-
 	except KeyError as e:
-		log.error(f"Invalid parameter: {e}")
+		logs.error({'message': 'Invalid parameter'})
 		return False
 
 	# Create the ALDAP object
@@ -109,7 +93,7 @@ def login(username, password):
 		LDAP_SERVER_DOMAIN,
 		LDAP_SEARCH_BASE,
 		LDAP_SEARCH_FILTER,
-		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE=='enabled',
+		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE,
 		LDAP_REQUIRED_GROUPS_CONDITIONAL
 	)
 
@@ -117,23 +101,24 @@ def login(username, password):
 	# The username and password are from the Basic Authentication pop-up form
 	aldap.setUser(username, password)
 
+	# Check if the username and password are valid
+	# First check inside the cache and then in the LDAP server
+	if not cache.validateUser(username, password):
+		if aldap.authenticateUser():
+			cache.addUser(username, password)
+		else:
+			return False
+
 	# Check groups only if they are defined
 	matchesGroups = []
 	if LDAP_REQUIRED_GROUPS:
 		groups = LDAP_REQUIRED_GROUPS.split(",") # Split the groups by comma and trim
 		groups = [x.strip() for x in groups] # Remove spaces
+		if not LDAP_REQUIRED_GROUPS_CASE_SENSITIVE:
+			groups = groups.lower()
 		validGroups, matchesGroups = aldap.validateGroups(groups)
 		if not validGroups:
 			return False
-
-	# Check if the username and password are valid
-	# First check inside the cache and then in the LDAP server
-	if not cache.validate(username, password):
-		if not aldap.authenticateUser():
-			return False
-
-	# Include the user in the cache
-	cache.add(username, password)
 
 	# Success
 	g.username = username # Set the username to send in the headers response

@@ -1,31 +1,45 @@
-import logging
+from logs import Logs
 from datetime import datetime, timedelta
+import hashlib
 
 class Cache:
 	def __init__(self, expirationMinutes):
 		self.expirationMinutes = expirationMinutes
 		self.cache = {}
 		self.validUntil = datetime.now() + timedelta(minutes=self.expirationMinutes)
-		self.log = logging.getLogger('CACHE')
 
-        # Add a key and value to the cache
-	def add(self, key, value):
-		self.log.info(f"Caching key: {key}")
-		self.cache[key] = value
+		self.logs = Logs(self.__class__.__name__)
 
-        # Validate if the key has the same value
-        # Also check if the cache still valid
-	def validate(self, key, value):
-		if (self.validUntil < datetime.now()):
-			self.log.info("Cache expired.")
+	# Returns a sha256 hash
+	def hash(self, text):
+		return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+	# Add user to the cache
+	def addUser(self, username, password):
+		if username not in self.cache:
+			self.logs.info({'message':'Adding user to the cache.', 'username': username})
+			passwordHash = self.hash(password)
+			self.cache[username] = {'password': passwordHash, 'groups': []}
+
+	# Validate user from cache
+	# Returns True if the username and password are correct, False otherwise
+	def validateUser(self, username, password):
+		if self.validUntil < datetime.now():
+			self.logs.info({'message':'Cache expired.'})
 			self.cache = {}
 			self.validUntil = datetime.now() + timedelta(minutes=self.expirationMinutes)
+			return False
 
-		if key in self.cache:
-			self.log.info(f"Key found in cache: {key}")
-			if self.cache[key] == value:
-				self.log.info(f"Key valid: {key}")
+		if username in self.cache:
+			self.logs.info({'message':'User found in the cache.', 'username': username})
+			passwordHash = self.hash(password)
+			if passwordHash == self.cache[username]['password']:
+				self.logs.info({'message':'Username and password validated by cache.', 'username': username})
 				return True
+			else:
+				self.logs.warning({'message':'Invalid password from cache, invalidating cache.', 'username': username})
+				del self.cache[username]
+				return False
 
-		self.log.info(f"Key not found in cache: {key}")
+		self.logs.info({'message':'User not found in the cache.', 'username': username})
 		return False

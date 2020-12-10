@@ -1,8 +1,8 @@
 import ldap
 import time
 import re
-import logging
 from itertools import repeat
+from logs import Logs
 
 class Aldap:
 	def __init__(self, ldapEndpoint, dnUsername, dnPassword, serverDomain, searchBase, searchFilter, groupCaseSensitive, groupConditional):
@@ -22,49 +22,73 @@ class Aldap:
 		self.connect.set_option(ldap.OPT_REFERRALS, 0)
 		self.connect.set_option(ldap.OPT_DEBUG_LEVEL, 255)
 
-		self.log = logging.getLogger('ALDAP')
+		self.logs = Logs(self.__class__.__name__)
 
+	# Initialize the ALDAP object with the username and password
 	def setUser(self, username, password):
 		self.username = username
 		self.password = password
 		# Replace in the filter the variable "{username}" for the username
 		self.searchFilter = self.searchFilter.replace("{username}", self.username)
 
-	def search(self):
-		self.log.info(f"Searching by filter: {self.searchFilter}")
+	# Authenticate user by "username" and "password"
+	# Returns True if the user is valid
+	# Returns False if the user is invalid or there was a connectivy issue
+	def authenticateUser(self):
+		finalUsername = self.username
+		if self.serverDomain:
+			finalUsername = self.username+"@"+self.serverDomain
+
+		self.logs.info({'message':'Authenticating user.', 'username': self.username, 'finalUsername': finalUsername})
+
 		start = time.time()
+		try:
+			self.connect.simple_bind_s(finalUsername, self.password)
+			#self.connect.unbind_s()
+			end = time.time()-start
+			self.logs.info({'message':'Authentication successful.', 'username': self.username, 'elapsedTime': str(end)})
+			return True
+		except ldap.INVALID_CREDENTIALS:
+			self.logs.warning({'message':'Invalid credentials.', 'username': self.username})
+		except ldap.LDAPError as e:
+			self.logs.error({'message':'There was an error trying to bind.'})
+
+		return False
+
+	def getTree(self):
 		result = ""
 		try:
+			start = time.time()
 			self.connect.simple_bind_s(self.dnUsername, self.dnPassword)
 			result = self.connect.search_s(self.searchBase, ldap.SCOPE_SUBTREE, self.searchFilter)
 			#self.connect.unbind_s()
+			end = time.time()-start
+			self.logs.info({'message':'Search by filter.', 'filter': self.searchFilter, 'elapsedTime': str(end)})
 		except ldap.LDAPError as e:
-			self.log.error("There was an error when trying to bind.")
-			self.log.error(e)
+			self.logs.error({'message':'There was an error trying to bind meanwhile trying to do a search.'})
+			print(e)
 
-		self.log.info(f"Time: {time.time()-start}")
 		return result
 
 	def decode(self, word:bytes):
 		return word.decode("utf-8")
 
-	def findMatch(self, matchGroup:str, userGroup:str):
+	def findMatch(self, group:str, ADGroup:str):
 		# Extract the Common Name from the string (letters, spaces and underscores)
-		userGroup = re.match('CN=((\w*\s?_?]*)*)', userGroup).group(1)
+		ADGroup = re.match('CN=((\w*\s?_?]*)*)', ADGroup).group(1)
 
 		if not self.groupCaseSensitive:
-			userGroup = userGroup.lower()
-			matchGroup = matchGroup.lower()
+			group = group.lower()
 
 		# return match against supplied group/pattern (None if there is no match)
 		try:
-			return re.fullmatch(f'{matchGroup}.*', userGroup).group(0)
+			return re.fullmatch(f'{group}.*', ADGroup).group(0)
 		except:
 			return None
 
 	# Validate the groups in the Active Directory tree
 	def validateGroups(self, groups):
-		tree = self.search()
+		tree = self.getTree()
 
 		# Crawl tree and extract the groups of the user
 		userGroups = []
@@ -76,9 +100,6 @@ class Aldap:
 					None
 		userGroups = list(map(self.decode,userGroups))
 
-		self.log.info(f"Validating the following groups: {groups}")
-		self.log.info(f"Conditional: {self.groupConditional}")
-
 		# List for the matches groups
 		matchedGroups = []
 		matchesByGroup = []
@@ -89,44 +110,21 @@ class Aldap:
 				matchesByGroup.append((group,matches))
 				matchedGroups.extend(matches)
 
-		self.log.info(f"Matched groups: {matchedGroups}")
+		self.logs.info({'message':'Validating groups.', 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 
 		# Conditiona OR, true if just 1 group match
 		if self.groupConditional == 'or':
 			if matchedGroups:
-				self.log.info("One of the groups is valid for the user.")
+				self.logs.info({'message':'At least one group is valid for the user.', 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 				return True,matchedGroups
 		# Conditiona AND, true if all the groups match
 		elif self.groupConditional == 'and':
 			if len(groups) == len(matchesByGroup):
-				self.log.info("All groups are valid for the user.")
+				self.logs.info({'message':'All groups are valid for the user.', 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 				return True,matchedGroups
 		else:
-			self.log.warning("Invalid group conditional.")
+			self.logs.warning({'message':'Invalid group conditional.', 'conditional': self.groupConditional})
 			return False,[]
 
-		self.log.warning("Invalid groups.")
 		return False,[]
 
-	def authenticateUser(self):
-		finalUsername = self.username
-		if self.serverDomain:
-			# The configuration has serverDomain the username is username@domain
-			finalUsername = self.username+"@"+self.serverDomain
-
-		self.log.info(f"Authenticating user: {finalUsername}")
-
-		start = time.time()
-		try:
-			self.connect.simple_bind_s(finalUsername, self.password)
-			self.connect.unbind_s()
-			self.log.info(f"Username valid: {finalUsername}")
-			self.log.info(f"Time: {time.time()-start}")
-			return True
-		except ldap.INVALID_CREDENTIALS:
-			self.log.warning("Invalid credentials.")
-		except ldap.LDAPError as e:
-			self.log.error("There was an error trying to bind.")
-			self.log.error(e)
-
-		return False
