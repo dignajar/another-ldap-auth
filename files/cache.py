@@ -7,7 +7,8 @@ class Cache:
 		self.expirationMinutes = expirationMinutes
 		self.cache = {}
 		self.validUntil = datetime.now() + timedelta(minutes=self.expirationMinutes)
-		self.logs = Logs()
+
+		self.logs = Logs(self.__class__.__name__)
 
 	# Returns a sha256 hash
 	def hash(self, text):
@@ -18,12 +19,7 @@ class Cache:
 		if username not in self.cache:
 			self.logs.info({'message':'Adding user to the cache.', 'username': username})
 			passwordHash = self.hash(password)
-			self.cache[username] = {'password': passwordHash, 'groups': ''}
-
-	# Add groups to the cached user
-	def addGroups(self, username, groups):
-		if username in self.cache:
-			self.cache[username]['groups'] = groups
+			self.cache[username] = {'password': passwordHash, 'groups': []}
 
 	# Validate user from cache
 	# Returns True if the username and password are correct, False otherwise
@@ -47,4 +43,3 @@ class Cache:
 
 		self.logs.info({'message':'User not found in the cache.', 'username': username})
 		return False
-

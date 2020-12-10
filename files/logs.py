@@ -4,7 +4,7 @@ from os import environ
 import json
 
 class Logs:
-	def __init__(self):
+	def __init__(self, objectName):
 		self.level = 'INFO'
 		if "LOG_LEVEL" in environ:
 			self.level = environ["LOG_LEVEL"]
@@ -13,8 +13,11 @@ class Logs:
 		if "LOG_FORMAT" in environ:
 			self.format = environ["LOG_FORMAT"]
 
-	def show(self, fields):
+		self.objectName = objectName
+
+	def __print__(self, fields):
 		fields['level'] = self.level
+		fields['objectName'] = self.objectName
 		fields['date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 		# Try to get IP and referrer from user
@@ -31,12 +34,12 @@ class Logs:
 
 	def error(self, fields):
 		if self.level in ['INFO', 'WARNING', 'ERROR']:
-			self.show(fields)
+			self.__print__(fields)
 
 	def warning(self, fields):
 		if self.level in ['INFO', 'WARNING']:
-			self.show(fields)
+			self.__print__(fields)
 
 	def info(self, fields):
 		if self.level in ['INFO']:
-			self.show(fields)
+			self.__print__(fields)

@@ -10,7 +10,7 @@ from os import environ
 from logs import Logs
 
 # --- Logging -----------------------------------------------------------------
-logs = Logs()
+logs = Logs('main')
 
 # --- Cache -------------------------------------------------------------------
 CACHE_EXPIRATION = 5  # Expiration in minutes
@@ -72,9 +72,9 @@ def login(username, password):
 		# The default is "enabled", another option is "disabled"
 		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = "enabled"
 		if "Ldap-Required-Groups-Case-Sensitive" in request.headers:
-			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = request.headers["Ldap-Required-Groups-Case-Sensitive"]
+			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = request.headers["Ldap-Required-Groups-Case-Sensitive"] =='enabled'
 		elif "LDAP_REQUIRED_GROUPS_CASE_SENSITIVE" in environ:
-			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = environ["LDAP_REQUIRED_GROUPS_CASE_SENSITIVE"]
+			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = environ["LDAP_REQUIRED_GROUPS_CASE_SENSITIVE"] =='enabled'
 
 		LDAP_SERVER_DOMAIN = ""
 		if "Ldap-Server-Domain" in request.headers:
@@ -93,7 +93,7 @@ def login(username, password):
 		LDAP_SERVER_DOMAIN,
 		LDAP_SEARCH_BASE,
 		LDAP_SEARCH_FILTER,
-		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE=='enabled',
+		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE,
 		LDAP_REQUIRED_GROUPS_CONDITIONAL
 	)
 
@@ -104,26 +104,21 @@ def login(username, password):
 	# Check if the username and password are valid
 	# First check inside the cache and then in the LDAP server
 	if not cache.validateUser(username, password):
-		if not aldap.authenticateUser():
-			return False
-		else:
-			# Include the user in the cache after successfully authenticated
+		if aldap.authenticateUser():
 			cache.addUser(username, password)
+		else:
+			return False
 
 	# Check groups only if they are defined
 	matchesGroups = []
 	if LDAP_REQUIRED_GROUPS:
 		groups = LDAP_REQUIRED_GROUPS.split(",") # Split the groups by comma and trim
 		groups = [x.strip() for x in groups] # Remove spaces
-		#
-		# TODO: Validate groups from cache
-		#
+		if not LDAP_REQUIRED_GROUPS_CASE_SENSITIVE:
+			groups = groups.lower()
 		validGroups, matchesGroups = aldap.validateGroups(groups)
 		if not validGroups:
 			return False
-		else:
-			# Include the matches groups to the cache
-			cache.addGroups(username, matchesGroups)
 
 	# Success
 	g.username = username # Set the username to send in the headers response

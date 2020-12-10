@@ -22,7 +22,7 @@ class Aldap:
 		self.connect.set_option(ldap.OPT_REFERRALS, 0)
 		self.connect.set_option(ldap.OPT_DEBUG_LEVEL, 255)
 
-		self.logs = Logs()
+		self.logs = Logs(self.__class__.__name__)
 
 	# Initialize the ALDAP object with the username and password
 	def setUser(self, username, password):
@@ -55,7 +55,7 @@ class Aldap:
 
 		return False
 
-	def search(self):
+	def getTree(self):
 		result = ""
 		try:
 			start = time.time()
@@ -73,23 +73,22 @@ class Aldap:
 	def decode(self, word:bytes):
 		return word.decode("utf-8")
 
-	def findMatch(self, matchGroup:str, userGroup:str):
+	def findMatch(self, group:str, ADGroup:str):
 		# Extract the Common Name from the string (letters, spaces and underscores)
-		userGroup = re.match('CN=((\w*\s?_?]*)*)', userGroup).group(1)
+		ADGroup = re.match('CN=((\w*\s?_?]*)*)', ADGroup).group(1)
 
 		if not self.groupCaseSensitive:
-			userGroup = userGroup.lower()
-			matchGroup = matchGroup.lower()
+			group = group.lower()
 
 		# return match against supplied group/pattern (None if there is no match)
 		try:
-			return re.fullmatch(f'{matchGroup}.*', userGroup).group(0)
+			return re.fullmatch(f'{group}.*', ADGroup).group(0)
 		except:
 			return None
 
 	# Validate the groups in the Active Directory tree
 	def validateGroups(self, groups):
-		tree = self.search()
+		tree = self.getTree()
 
 		# Crawl tree and extract the groups of the user
 		userGroups = []
@@ -116,7 +115,7 @@ class Aldap:
 		# Conditiona OR, true if just 1 group match
 		if self.groupConditional == 'or':
 			if matchedGroups:
-				self.logs.info({'message':'One of the groups is valid for the user.', 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
+				self.logs.info({'message':'At least one group is valid for the user.', 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 				return True,matchedGroups
 		# Conditiona AND, true if all the groups match
 		elif self.groupConditional == 'and':
