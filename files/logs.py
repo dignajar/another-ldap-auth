@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask import request
 from os import environ
 import json
@@ -15,11 +15,14 @@ class Logs:
 
 		self.objectName = objectName
 
-	def __print__(self, fields):
-		fields['level'] = self.level
-		fields['objectName'] = self.objectName
-		fields['date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+	def __print__(self, extraFields):
+		fields = {
+			'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+			'level': self.level,
+			'objectName': self.objectName,
+			'ip': '',
+			'referrer': ''
+		}
 		# Try to get IP and referrer from user
 		try:
 			fields['ip'] = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
@@ -27,19 +30,22 @@ class Logs:
 		except Exception as e:
 			pass
 
+		# Include extra fields custom by the user
+		fields.update(extraFields)
+
 		if self.format == 'JSON':
 			print(json.dumps(fields))
 		else:
-			print(" - ".join(fields.values()))
+			print(' - '.join(map(str, fields.values())))
 
-	def error(self, fields):
+	def error(self, extraFields):
 		if self.level in ['INFO', 'WARNING', 'ERROR']:
-			self.__print__(fields)
+			self.__print__(extraFields)
 
-	def warning(self, fields):
+	def warning(self, extraFields):
 		if self.level in ['INFO', 'WARNING']:
-			self.__print__(fields)
+			self.__print__(extraFields)
 
-	def info(self, fields):
+	def info(self, extraFields):
 		if self.level in ['INFO']:
-			self.__print__(fields)
+			self.__print__(extraFields)
