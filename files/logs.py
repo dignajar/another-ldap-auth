@@ -15,9 +15,8 @@ class Logs:
 
 		self.objectName = objectName
 
-	def __print__(self, fields):
-		# These are the fields are printed all the time in each log line, in the following order.
-		mandatoryFields = {
+	def __print__(self, extraFields):
+		fields = {
 			'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
 			'level': self.level,
 			'objectName': self.objectName,
@@ -26,27 +25,27 @@ class Logs:
 		}
 		# Try to get IP and referrer from user
 		try:
-			mandatoryFields['ip'] = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-			mandatoryFields['referrer'] = request.headers.get("Referer")
+			fields['ip'] = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+			fields['referrer'] = request.headers.get("Referer")
 		except Exception as e:
 			pass
 
-		# Merge dictionaries
-		mandatoryFields.update(fields)
+		# Include extra fields custom by the user
+		fields.update(extraFields)
 
 		if self.format == 'JSON':
-			print(json.dumps(mandatoryFields))
+			print(json.dumps(fields))
 		else:
-			print(' - '.join(map(str, mandatoryFields.values())))
+			print(' - '.join(map(str, fields.values())))
 
-	def error(self, fields):
+	def error(self, extraFields):
 		if self.level in ['INFO', 'WARNING', 'ERROR']:
-			self.__print__(fields)
+			self.__print__(extraFields)
 
-	def warning(self, fields):
+	def warning(self, extraFields):
 		if self.level in ['INFO', 'WARNING']:
-			self.__print__(fields)
+			self.__print__(extraFields)
 
-	def info(self, fields):
+	def info(self, extraFields):
 		if self.level in ['INFO']:
-			self.__print__(fields)
+			self.__print__(extraFields)
