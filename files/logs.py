@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask import request
 from os import environ
 import json
@@ -16,21 +16,28 @@ class Logs:
 		self.objectName = objectName
 
 	def __print__(self, fields):
-		fields['level'] = self.level
-		fields['objectName'] = self.objectName
-		fields['date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+		# These are the fields are printed all the time in each log line, in the following order.
+		mandatoryFields = {
+			'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+			'level': self.level,
+			'objectName': self.objectName,
+			'ip': '',
+			'referrer': ''
+		}
 		# Try to get IP and referrer from user
 		try:
-			fields['ip'] = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-			fields['referrer'] = request.headers.get("Referer")
+			mandatoryFields['ip'] = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+			mandatoryFields['referrer'] = request.headers.get("Referer")
 		except Exception as e:
 			pass
 
+		# Merge dictionaries
+		mandatoryFields.update(fields)
+
 		if self.format == 'JSON':
-			print(json.dumps(fields))
+			print(json.dumps(mandatoryFields))
 		else:
-			print(" - ".join(fields.values()))
+			print(' - '.join(map(str, mandatoryFields.values())))
 
 	def error(self, fields):
 		if self.level in ['INFO', 'WARNING', 'ERROR']:
