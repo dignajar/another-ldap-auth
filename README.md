@@ -4,11 +4,20 @@
 
 **Another LDAP Authentication** is an implementation of the `ldap-auth-daemon` services described in the official blog from Nginx in the [following article](https://www.nginx.com/blog/nginx-plus-authenticate-users/).
 
-**Another LDAP Authentication** it's prepared to run inside a Docker container, also you can run the Python script without the Docker container. Supports `ldap` and `ldaps` and provide a simple cache.
+**Another LDAP Authentication** it's prepared to run inside a Docker container, also you can run the Python script without the Docker container.
 
 [![Docker Hub](https://img.shields.io/badge/Docker-Hub-blue.svg)](https://hub.docker.com/r/dignajar/another-ldap-auth)
 
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-Deployment-blue.svg)](https://github.com/dignajar/another-ldap-auth#deploy-in-kubernetes-with-nginx-ingress-controller)
+[![Kubernetes YAML manifests](https://img.shields.io/badge/Kubernetes-Deployment-blue.svg)](https://github.com/dignajar/another-ldap-auth/tree/master/kubernetes)
+
+## Features
+- Supports `ldap` and `ldaps`.
+- Provide a cache for users, you can limit the time of the cache.
+- Supports validation groups.
+- Supports validation groups with conditionals and regex.
+- Supports configuration via headers or via environment variables.
+- Supports HTTP response headers such as username and matched groups.
+- Log format in Plain-Text or JSON.
 
 ## Diagram
 ![Another LDAP Authentication](https://i.ibb.co/Fn1ncbP/another-ldap-authentication.jpg)
@@ -33,8 +42,9 @@ All values type are `string`.
 | LDAP_REQUIRED_GROUPS_CONDITIONAL    | `and`     | `and`, `or`                      | Conditional to match all the groups in the list or just one of them.                   | `or`                                                           |
 | LDAP_REQUIRED_GROUPS_CASE_SENSITIVE | `enabled` | `enabled`, `disabled`            | Enabled or disabled case sensitive groups matches.                                     | `disabled`                                                     |
 | CACHE_EXPIRATION                    | `5`       |                                  | Cache expiration time in minutes.                                                      | `10`                                                           |
-| LOG_LEVEL                           | `INFO`    | `DEBUG`, `INFO`, `WARN`, `ERROR` | Logger level.                                                                          | `DEBUG`                                                        |
+| LOG_LEVEL                           | `INFO`    | `INFO`, `WARNING`, `ERROR`       | Logger level.                                                                          | `DEBUG`                                                        |
 | LOG_FORMAT                          | `TEXT`    | `TEXT`, `JSON`                   | Output format of the logger.                                                           | `JSON`                                                         |
+| LDAP_HTTPS_SUPPORT                  | `disabled`| `enabled`, `disabled`            | Enabled or disabled HTTPS support with self signed certificate.                        |                                                                |
 
 ### HTTP request headers
 The variables send via HTTP headers take precedence over environment variables.

@@ -70,17 +70,23 @@ def login(username, password):
 			LDAP_REQUIRED_GROUPS_CONDITIONAL = environ["LDAP_REQUIRED_GROUPS_CONDITIONAL"]
 
 		# The default is "enabled", another option is "disabled"
-		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = "enabled"
+		LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = True
 		if "Ldap-Required-Groups-Case-Sensitive" in request.headers:
-			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = request.headers["Ldap-Required-Groups-Case-Sensitive"] =='enabled'
+			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = (request.headers["Ldap-Required-Groups-Case-Sensitive"] == "enabled")
 		elif "LDAP_REQUIRED_GROUPS_CASE_SENSITIVE" in environ:
-			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = environ["LDAP_REQUIRED_GROUPS_CASE_SENSITIVE"] =='enabled'
+			LDAP_REQUIRED_GROUPS_CASE_SENSITIVE = (environ["LDAP_REQUIRED_GROUPS_CASE_SENSITIVE"] == "enabled")
 
 		LDAP_SERVER_DOMAIN = ""
 		if "Ldap-Server-Domain" in request.headers:
 			LDAP_SERVER_DOMAIN = request.headers["Ldap-Server-Domain"]
 		elif "LDAP_SERVER_DOMAIN" in environ:
 			LDAP_SERVER_DOMAIN = environ["LDAP_SERVER_DOMAIN"]
+
+		LDAP_HTTPS_SUPPORT = False
+		if "Ldap-Http-Support" in request.headers:
+			LDAP_HTTPS_SUPPORT = (request.headers["Ldap-Http-Support"] == "disabled")
+		elif "LDAP_HTTPS_SUPPORT" in environ:
+			LDAP_HTTPS_SUPPORT = (environ["LDAP_HTTPS_SUPPORT"] == "disabled")
 	except KeyError as e:
 		logs.error({'message': 'Invalid parameter'})
 		return False
@@ -115,7 +121,8 @@ def login(username, password):
 		groups = LDAP_REQUIRED_GROUPS.split(",") # Split the groups by comma and trim
 		groups = [x.strip() for x in groups] # Remove spaces
 		if not LDAP_REQUIRED_GROUPS_CASE_SENSITIVE:
-			groups = groups.lower()
+			groups = [x.lower() for x in groups] # Convert to lowercase
+			print(groups)
 		validGroups, matchesGroups = aldap.validateGroups(groups)
 		if not validGroups:
 			return False
@@ -137,4 +144,11 @@ def index(path):
 
 # Main
 if __name__ == '__main__':
-	app.run(host='0.0.0.0', port=9000, debug=False)
+	LDAP_HTTPS_SUPPORT = False
+	if "LDAP_HTTPS_SUPPORT" in environ:
+		LDAP_HTTPS_SUPPORT = (environ["LDAP_HTTPS_SUPPORT"] == "enabled")
+
+	if LDAP_HTTPS_SUPPORT:
+		app.run(host='0.0.0.0', port=9000, debug=False, ssl_context='adhoc')
+	else:
+		app.run(host='0.0.0.0', port=9000, debug=False)

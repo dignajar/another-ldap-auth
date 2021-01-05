@@ -78,7 +78,7 @@ class Aldap:
 		ADGroup = re.match('CN=((\w*\s?_?]*)*)', ADGroup).group(1)
 
 		if not self.groupCaseSensitive:
-			group = group.lower()
+			ADGroup = ADGroup.lower()
 
 		# return match against supplied group/pattern (None if there is no match)
 		try:
@@ -110,21 +110,21 @@ class Aldap:
 				matchesByGroup.append((group,matches))
 				matchedGroups.extend(matches)
 
-		self.logs.info({'message':'Validating groups.', 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
+		self.logs.info({'message':'Validating groups.', 'username': self.username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 
 		# Conditiona OR, true if just 1 group match
 		if self.groupConditional == 'or':
 			if matchedGroups:
-				self.logs.info({'message':'At least one group is valid for the user.', 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
+				self.logs.info({'message':'At least one group is valid for the user.', 'username': self.username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 				return True,matchedGroups
 		# Conditiona AND, true if all the groups match
 		elif self.groupConditional == 'and':
 			if len(groups) == len(matchesByGroup):
-				self.logs.info({'message':'All groups are valid for the user.', 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
+				self.logs.info({'message':'All groups are valid for the user.', 'username': self.username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 				return True,matchedGroups
 		else:
-			self.logs.warning({'message':'Invalid group conditional.', 'conditional': self.groupConditional})
+			self.logs.error({'message':'Invalid group conditional.', 'username': self.username, 'conditional': self.groupConditional})
 			return False,[]
 
+		self.logs.error({'message':'Invalid groups for the user.', 'username': self.username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 		return False,[]
-
