@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "another-ldap-auth.fullname" . }}
+  labels:
+    {{- include "another-ldap-auth.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "another-ldap-auth.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "another-ldap-auth.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "another-ldap-auth.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: CACHE_EXPIRATION
+              value: "{{ .Values.ldap.cacheExpiration }}"
+            - name: LDAP_ENDPOINT
+              value: {{ .Values.ldap.endpoint }}
+            - name: LDAP_HTTPS_SUPPORT
+              value: {{ .Values.ldap.httpsSupport }}
+            - name: LDAP_MANAGER_DN_USERNAME
+              value: {{ .Values.ldap.managerDnUsername }}
+            - name: LDAP_SERVER_DOMAIN
+              value: {{ .Values.ldap.serverDomain }}
+            - name: LDAP_SEARCH_BASE
+              value: {{ .Values.ldap.searchBase }}
+            - name: LDAP_SEARCH_FILTER
+              value: {{ .Values.ldap.searchFilter }}
+            - name: LOG_LEVEL
+              value: {{ .Values.ldap.logLevel }}
+            - name: LDAP_MANAGER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ if .Values.ldap.existingSecret }}{{ .Values.ldap.existingSecret }}{{ else }}{{ include "another-ldap-auth.fullname" . }}{{ end }}
+                  key: LDAP_MANAGER_PASSWORD
+          ports:
+            - containerPort: {{ .Values.service.containerPort }}
+              protocol: {{ .Values.service.protocol }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

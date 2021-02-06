@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "another-ldap-auth.fullname" . }}
+  labels:
+    {{- include "another-ldap-auth.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.containerPort }}
+      protocol: TCP
+  selector:
+    {{- include "another-ldap-auth.selectorLabels" . | nindent 4 }}
