@@ -51,7 +51,7 @@ class Aldap:
 		except ldap.INVALID_CREDENTIALS:
 			self.logs.warning({'message':'Invalid credentials.', 'username': self.username})
 		except ldap.LDAPError as e:
-			self.logs.error({'message':'There was an error trying to bind.'})
+			self.logs.error({'message':'There was an error trying to bind: %s' % e})
 
 		return False
 
@@ -65,8 +65,7 @@ class Aldap:
 			end = time.time()-start
 			self.logs.info({'message':'Search by filter.', 'filter': self.searchFilter, 'elapsedTime': str(end)})
 		except ldap.LDAPError as e:
-			self.logs.error({'message':'There was an error trying to bind meanwhile trying to do a search.'})
-			print(e)
+			self.logs.error({'message':'There was an error trying to bind meanwhile trying to do a search: %s' % e})
 
 		return result
 
