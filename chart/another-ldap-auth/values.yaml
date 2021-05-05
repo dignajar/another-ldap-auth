@@ -17,6 +17,7 @@ ldap:
   httpsSupport: "enabled"
   endpoint: "ldaps://testmyldap.com:636"
   managerDnUsername: "CN=john,OU=Administrators,DC=TESTMYLDAP,DC=COM"
+  managerDnPassword:
   serverDomain: "TESTMYLDAP.COM"
   searchBase: "DC=TESTMYLDAP,DC=COM"
   searchFilter: "(sAMAccountName={username})"
