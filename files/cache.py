@@ -1,29 +1,54 @@
-from logs import Logs
 from datetime import datetime, timedelta
 import hashlib
-
+import re
+from itertools import repeat
+from typing import Union
+from logs import Logs
 class Cache:
-	def __init__(self, expirationMinutes):
+	def __init__(self, expirationMinutes:int):
 		self.expirationMinutes = expirationMinutes
 		self.cache = {}
 		self.validUntil = datetime.now() + timedelta(minutes=self.expirationMinutes)
+		self.groupCaseSensitive = True
+		self.groupConditional = 'and'
 
 		self.logs = Logs(self.__class__.__name__)
 
-	# Returns a sha256 hash
-	def hash(self, text):
+	def settings(self, groupCaseSensitive:bool, groupConditional:str):
+		'''
+			Initiliaze settings for the cache
+		'''
+		self.groupCaseSensitive = groupCaseSensitive
+		self.groupConditional = groupConditional
+
+	def hash(self, text:str) -> str:
+		'''
+			Returns a hash from a string
+		'''
 		return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
-	# Add user to the cache
-	def addUser(self, username, password):
+	def addUser(self, username:str, password:str):
+		'''
+			Add user to the cache
+		'''
 		if username not in self.cache:
 			self.logs.info({'message':'Adding user to the cache.', 'username': username})
 			passwordHash = self.hash(password)
-			self.cache[username] = {'password': passwordHash, 'groups': []}
+			self.cache[username] = {'password': passwordHash, 'matchedGroups': []}
 
-	# Validate user from cache
-	# Returns True if the username and password are correct, False otherwise
-	def validateUser(self, username, password):
+	def addGroups(self, username:str, matchedGroups:list):
+		'''
+			Add user groups to the cache
+		'''
+		if username in self.cache:
+			self.logs.info({'message':'Adding groups to the cache.', 'username': username, 'matchedGroups': ','.join(matchedGroups)})
+			self.cache[username]['matchedGroups'] = matchedGroups
+
+	def validateUser(self, username:str, password:str) -> bool:
+		'''
+			Validate user from cache
+			Returns True if the username and password are correct, False otherwise
+		'''
 		if self.validUntil < datetime.now():
 			self.logs.info({'message':'Cache expired.'})
 			self.cache = {}
@@ -31,7 +56,7 @@ class Cache:
 			return False
 
 		if username in self.cache:
-			self.logs.info({'message':'User found in the cache.', 'username': username})
+			self.logs.info({'message':'Validating user via cache.', 'username': username})
 			passwordHash = self.hash(password)
 			if passwordHash == self.cache[username]['password']:
 				self.logs.info({'message':'Username and password validated by cache.', 'username': username})
@@ -41,5 +66,54 @@ class Cache:
 				del self.cache[username]
 				return False
 
-		self.logs.info({'message':'User not found in the cache.', 'username': username})
+		self.logs.info({'message':'User not found in the cache for authentication.', 'username': username})
 		return False
+
+	def findMatch(self, group:str, adGroup:str):
+		# Disable case sensitive
+		if not self.groupCaseSensitive:
+			adGroup = adGroup.lower()
+			group = group.lower()
+
+		# Return match against supplied group/pattern (None if there is no match)
+		try:
+			return re.fullmatch(f'{group}.*', adGroup).group(0)
+		except:
+			return None
+
+	def validateGroups(self, username:str, groups:list):
+		'''
+			Validate user's groups
+			Returns True if the groups are valid for the user, False otherwise
+		'''
+		if username in self.cache:
+			self.logs.info({'message':'Validating groups via cache.', 'username': username})
+			matchedGroups = []
+			matchesByGroup = []
+			cacheGroups = self.cache[username]['matchedGroups']
+			for group in groups:
+				matches = list(filter(None,list(map(self.findMatch, repeat(group), cacheGroups))))
+				if matches:
+					matchesByGroup.append((group,matches))
+					matchedGroups.extend(matches)
+
+			# Conditional OR, true if just 1 group match
+			if self.groupConditional == 'or':
+				if len(matchedGroups) > 0:
+					self.logs.info({'message':'At least one group from cache is valid for the user.', 'username': username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
+					return True,matchedGroups
+			# Conditional AND, true if all the groups match
+			elif self.groupConditional == 'and':
+				if len(groups) == len(matchesByGroup):
+					self.logs.info({'message':'All groups from cache are valid for the user.', 'username': username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
+					return True,matchedGroups
+			else:
+				self.logs.error({'message':'Invalid conditional group.', 'username': username, 'conditional': self.groupConditional})
+				return False,[]
+
+			self.logs.error({'message':'Invalid groups from cache.', 'username': username, 'conditional': self.groupConditional})
+			self.cache[username]['matchedGroups'] = []
+			return False,[]
+
+		self.logs.info({'message':'User not found in the cache for validate groups.', 'username': username})
+		return False,[]

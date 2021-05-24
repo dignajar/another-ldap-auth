@@ -21,7 +21,7 @@ spec:
           imagePullPolicy: Always
           name: another-ldap-auth
           ports:
-            - name: http
+            - name: https
               containerPort: 9000
           env:
             - name: LDAP_ENDPOINT
@@ -34,6 +34,12 @@ spec:
               value: "DC=TESTMYLDAP,DC=COM"
             - name: LDAP_SEARCH_FILTER
               value: "(sAMAccountName={username})"
+            - name: LDAP_HTTPS_SUPPORT
+              value: "enabled"
+            - name: LOG_FORMAT
+              value: "JSON"
+            - name: LOG_LEVEL
+              values: "INFO"
             - name: LDAP_MANAGER_PASSWORD
               valueFrom:
                 secretKeyRef:

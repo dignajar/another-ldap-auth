@@ -12,10 +12,8 @@ class Aldap:
 		self.dnPassword = dnPassword
 		self.serverDomain = serverDomain
 		self.searchFilter = searchFilter
-		self.username = ''
-		self.password = ''
-		self.groupCaseSensitive = groupCaseSensitive
 		self.groupConditional = groupConditional.lower()
+		self.groupCaseSensitive = groupCaseSensitive
 
 		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
 		self.connect = ldap.initialize(self.ldapEndpoint)
@@ -24,106 +22,109 @@ class Aldap:
 
 		self.logs = Logs(self.__class__.__name__)
 
-	# Initialize the ALDAP object with the username and password
-	def setUser(self, username, password):
-		self.username = username
-		self.password = password
-		# Replace in the filter the variable "{username}" for the username
-		self.searchFilter = self.searchFilter.replace("{username}", self.username)
-
-	# Authenticate user by "username" and "password"
-	# Returns True if the user is valid
-	# Returns False if the user is invalid or there was a connectivy issue
-	def authenticateUser(self):
-		finalUsername = self.username
+	def authenticateUser(self, username:str, password:str) -> bool:
+		'''
+			Authenticate user by username and password
+		'''
+		finalUsername = username
 		if self.serverDomain:
-			finalUsername = self.username+"@"+self.serverDomain
+			finalUsername = username+"@"+self.serverDomain
 
-		self.logs.info({'message':'Authenticating user.', 'username': self.username, 'finalUsername': finalUsername})
+		self.logs.info({'message':'Authenticating user.', 'username': username, 'finalUsername': finalUsername})
 
 		start = time.time()
 		try:
-			self.connect.simple_bind_s(finalUsername, self.password)
+			self.connect.simple_bind_s(finalUsername, password)
 			#self.connect.unbind_s()
 			end = time.time()-start
-			self.logs.info({'message':'Authentication successful.', 'username': self.username, 'elapsedTime': str(end)})
+			self.logs.info({'message':'Authentication successful.', 'username': username, 'elapsedTime': str(end)})
 			return True
 		except ldap.INVALID_CREDENTIALS:
-			self.logs.warning({'message':'Invalid credentials.', 'username': self.username})
+			self.logs.warning({'message':'Invalid credentials.', 'username': username})
 		except ldap.LDAPError as e:
 			self.logs.error({'message':'There was an error trying to bind: %s' % e})
 
 		return False
 
-	def getTree(self):
-		result = ""
+	def getTree(self, searchFilter:str) -> list:
+		'''
+			Returns the AD tree for the user, the user is search by the searchFilter
+		'''
+		result = []
 		try:
 			start = time.time()
 			self.connect.simple_bind_s(self.dnUsername, self.dnPassword)
-			result = self.connect.search_s(self.searchBase, ldap.SCOPE_SUBTREE, self.searchFilter)
+			result = self.connect.search_s(self.searchBase, ldap.SCOPE_SUBTREE, searchFilter)
 			#self.connect.unbind_s()
 			end = time.time()-start
-			self.logs.info({'message':'Search by filter.', 'filter': self.searchFilter, 'elapsedTime': str(end)})
+			self.logs.info({'message':'Search by filter.', 'filter': searchFilter, 'elapsedTime': str(end)})
 		except ldap.LDAPError as e:
 			self.logs.error({'message':'There was an error trying to bind meanwhile trying to do a search: %s' % e})
 
 		return result
 
-	def decode(self, word:bytes):
+	def decode(self, word:bytes) -> str:
+		'''
+			Convert binary to string. b'test' => 'test'
+		'''
 		return word.decode("utf-8")
 
-	def findMatch(self, group:str, ADGroup:str):
+	def findMatch(self, group:str, adGroup:str):
 		# Extract the Common Name from the string (letters, spaces and underscores)
-		ADGroup = re.match('CN=((\w*\s?_?]*)*)', ADGroup).group(1)
+		adGroup = re.match('CN=((\w*\s?_?]*)*)', adGroup).group(1)
 
+		# Disable case sensitive
 		if not self.groupCaseSensitive:
-			ADGroup = ADGroup.lower()
+			adGroup = adGroup.lower()
+			group = group.lower()
 
-		# return match against supplied group/pattern (None if there is no match)
+		# Return match against supplied group/pattern (None if there is no match)
 		try:
-			return re.fullmatch(f'{group}.*', ADGroup).group(0)
+			return re.fullmatch(f'{group}.*', adGroup).group(0)
 		except:
 			return None
 
-	# Validate the groups in the Active Directory tree
-	def validateGroups(self, groups):
-		tree = self.getTree()
+	def validateGroups(self, username:str, groups:list):
+		'''
+			Validate user's groups
+			Returns True if the groups are valid for the user, False otherwise
+		'''
+		searchFilter = self.searchFilter.replace("{username}", username)
+		tree = self.getTree(searchFilter)
 
 		# Crawl tree and extract the groups of the user
-		userGroups = []
+		adGroups = []
 		for zone in tree:
 			for element in zone:
 				try:
-					userGroups.extend(element['memberOf'])
+					adGroups.extend(element['memberOf'])
 				except TypeError:
 					None
-		userGroups = list(map(self.decode,userGroups))
+		# Create a list from the elements and convert binary to str the items
+		adGroups = list(map(self.decode,adGroups))
 
-		# List for the matches groups
+		self.logs.info({'message':'Validating groups.', 'username': username, 'groups': ','.join(groups), 'conditional': self.groupConditional})
 		matchedGroups = []
 		matchesByGroup = []
 		for group in groups:
-			# apply find match function to each value and then remove None values
-			matches = list(filter(None,list(map(self.findMatch, repeat(group), userGroups))))
+			matches = list(filter(None,list(map(self.findMatch, repeat(group), adGroups))))
 			if matches:
 				matchesByGroup.append((group,matches))
 				matchedGroups.extend(matches)
 
-		self.logs.info({'message':'Validating groups.', 'username': self.username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
-
 		# Conditiona OR, true if just 1 group match
 		if self.groupConditional == 'or':
-			if matchedGroups:
-				self.logs.info({'message':'At least one group is valid for the user.', 'username': self.username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
+			if len(matchedGroups) > 0:
+				self.logs.info({'message':'At least one group is valid for the user.', 'username': username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 				return True,matchedGroups
 		# Conditiona AND, true if all the groups match
 		elif self.groupConditional == 'and':
 			if len(groups) == len(matchesByGroup):
-				self.logs.info({'message':'All groups are valid for the user.', 'username': self.username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
+				self.logs.info({'message':'All groups are valid for the user.', 'username': username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 				return True,matchedGroups
 		else:
-			self.logs.error({'message':'Invalid group conditional.', 'username': self.username, 'conditional': self.groupConditional})
+			self.logs.error({'message':'Invalid conditional group.', 'username': username, 'conditional': self.groupConditional})
 			return False,[]
 
-		self.logs.error({'message':'Invalid groups for the user.', 'username': self.username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
+		self.logs.error({'message':'Invalid groups for the user.', 'username': username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
 		return False,[]
