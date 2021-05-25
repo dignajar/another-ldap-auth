@@ -83,32 +83,32 @@ def login(username, password):
 			LDAP_SEARCH_FILTER = environ["LDAP_SEARCH_FILTER"]
 
 		# List of groups separated by comma
-		LDAP_MATCHING_GROUPS = ""
-		if "Ldap-Matching-Groups" in request.headers:
-			LDAP_MATCHING_GROUPS = request.headers["Ldap-Matching-Groups"]
-		elif "LDAP_MATCHING_GROUPS" in environ:
-			LDAP_MATCHING_GROUPS = environ["LDAP_MATCHING_GROUPS"]
+		LDAP_ALLOWED_GROUPS = ""
+		if "Ldap-Allowed-Groups" in request.headers:
+			LDAP_ALLOWED_GROUPS = request.headers["Ldap-Allowed-Groups"]
+		elif "LDAP_ALLOWED_GROUPS" in environ:
+			LDAP_ALLOWED_GROUPS = environ["LDAP_ALLOWED_GROUPS"]
 
 		# The default is "and", another option is "or"
-		LDAP_MATCHING_GROUPS_CONDITIONAL = "and"
-		if "Ldap-Matching-Groups-Conditional" in request.headers:
-			LDAP_MATCHING_GROUPS_CONDITIONAL = request.headers["Ldap-Matching-Groups-Conditional"]
-		elif "LDAP_MATCHING_GROUPS_CONDITIONAL" in environ:
-			LDAP_MATCHING_GROUPS_CONDITIONAL = environ["LDAP_MATCHING_GROUPS_CONDITIONAL"]
+		LDAP_ALLOWED_GROUPS_CONDITIONAL = "and"
+		if "Ldap-Allowed-Groups-Conditional" in request.headers:
+			LDAP_ALLOWED_GROUPS_CONDITIONAL = request.headers["Ldap-Allowed-Groups-Conditional"]
+		elif "LDAP_ALLOWED_GROUPS_CONDITIONAL" in environ:
+			LDAP_ALLOWED_GROUPS_CONDITIONAL = environ["LDAP_ALLOWED_GROUPS_CONDITIONAL"]
 
 		# The default is "enabled", another option is "disabled"
-		LDAP_MATCHING_GROUPS_CASE_SENSITIVE = True
-		if "Ldap-Matching-Groups-Case-Sensitive" in request.headers:
-			LDAP_MATCHING_GROUPS_CASE_SENSITIVE = (request.headers["Ldap-Matching-Groups-Case-Sensitive"] == "enabled")
-		elif "LDAP_MATCHING_GROUPS_CASE_SENSITIVE" in environ:
-			LDAP_MATCHING_GROUPS_CASE_SENSITIVE = (environ["LDAP_MATCHING_GROUPS_CASE_SENSITIVE"] == "enabled")
+		LDAP_ALLOWED_GROUPS_CASE_SENSITIVE = True
+		if "Ldap-Allowed-Groups-Case-Sensitive" in request.headers:
+			LDAP_ALLOWED_GROUPS_CASE_SENSITIVE = (request.headers["Ldap-Allowed-Groups-Case-Sensitive"] == "enabled")
+		elif "LDAP_ALLOWED_GROUPS_CASE_SENSITIVE" in environ:
+			LDAP_ALLOWED_GROUPS_CASE_SENSITIVE = (environ["LDAP_ALLOWED_GROUPS_CASE_SENSITIVE"] == "enabled")
 
 		# List of users separated by comma
-		LDAP_MATCHING_USERS = ""
-		if "Ldap-Matching-Users" in request.headers:
-			LDAP_MATCHING_USERS = request.headers["Ldap-Matching-Users"]
-		elif "LDAP_MATCHING_USERS" in environ:
-			LDAP_MATCHING_USERS = environ["LDAP_MATCHING_USERS"]
+		LDAP_ALLOWED_USERS = ""
+		if "Ldap-Allowed-Users" in request.headers:
+			LDAP_ALLOWED_USERS = request.headers["Ldap-Allowed-Users"]
+		elif "LDAP_ALLOWED_USERS" in environ:
+			LDAP_ALLOWED_USERS = environ["LDAP_ALLOWED_USERS"]
 
 		LDAP_SERVER_DOMAIN = ""
 		if "Ldap-Server-Domain" in request.headers:
@@ -126,13 +126,13 @@ def login(username, password):
 		LDAP_SERVER_DOMAIN,
 		LDAP_SEARCH_BASE,
 		LDAP_SEARCH_FILTER,
-		LDAP_MATCHING_GROUPS_CASE_SENSITIVE,
-		LDAP_MATCHING_GROUPS_CONDITIONAL
+		LDAP_ALLOWED_GROUPS_CASE_SENSITIVE,
+		LDAP_ALLOWED_GROUPS_CONDITIONAL
 	)
 
 	cache.settings(
-		LDAP_MATCHING_GROUPS_CASE_SENSITIVE,
-		LDAP_MATCHING_GROUPS_CONDITIONAL
+		LDAP_ALLOWED_GROUPS_CASE_SENSITIVE,
+		LDAP_ALLOWED_GROUPS_CONDITIONAL
 	)
 
 	# Check if the username and password are valid
@@ -144,8 +144,8 @@ def login(username, password):
 			return False
 
 	# Validate user via matching users
-	if LDAP_MATCHING_USERS:
-		matchingUsers = LDAP_MATCHING_USERS.split(",") # Convert string to list
+	if LDAP_ALLOWED_USERS:
+		matchingUsers = LDAP_ALLOWED_USERS.split(",") # Convert string to list
 		matchingUsers = list(map(cleanMatchingUsers, matchingUsers))
 		if username in matchingUsers:
 			logs.info({'message':'Username inside the matching users list.', 'username': username, 'matchingUsers': ','.join(matchingUsers)})
@@ -154,8 +154,8 @@ def login(username, password):
 
 	# Validate user via matching groups
 	matchedGroups = []
-	if LDAP_MATCHING_GROUPS:
-		matchingGroups = LDAP_MATCHING_GROUPS.split(",") # Convert string to list
+	if LDAP_ALLOWED_GROUPS:
+		matchingGroups = LDAP_ALLOWED_GROUPS.split(",") # Convert string to list
 		matchingGroups = list(map(cleanMatchingGroups, matchingGroups))
 		validGroups, matchedGroups = cache.validateGroups(username, matchingGroups)
 		if not validGroups:
