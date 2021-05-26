@@ -15,10 +15,10 @@ class Logs:
 
 		self.objectName = objectName
 
-	def __print__(self, extraFields):
+	def __print__(self, level, extraFields):
 		fields = {
 			'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-			'level': self.level,
+			'level': level,
 			'objectName': self.objectName,
 			'ip': '',
 			'referrer': ''
@@ -40,12 +40,12 @@ class Logs:
 
 	def error(self, extraFields):
 		if self.level in ['INFO', 'WARNING', 'ERROR']:
-			self.__print__(extraFields)
+			self.__print__('ERROR',extraFields)
 
 	def warning(self, extraFields):
 		if self.level in ['INFO', 'WARNING']:
-			self.__print__(extraFields)
+			self.__print__('WARNING',extraFields)
 
 	def info(self, extraFields):
 		if self.level in ['INFO']:
-			self.__print__(extraFields)
+			self.__print__('INFO',extraFields)

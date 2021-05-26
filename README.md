@@ -27,6 +27,8 @@ The parameters can be sent via environment variables or via HTTP headers, also y
 
 The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username, you can do something like this `(sAMAccountName={username})` and `{username}` is going to be replaced by the username typed in the login form.
 
+The parameter `LDAP_BIND_DN` support variable expansion with the username, you can do something like this `{username}@TESTMYLDAP.com` or `UID={username},OU=PEOPLE,DC=TESTMYLDAP,DC=COM` and `{username}` is going to be replaced by the username typed in the login form.
+
 All values type are `string`.
 
 ### Environment variables
@@ -37,7 +39,7 @@ All values type are `string`.
 | LDAP_MANAGER_PASSWORD               |           |                                  | Password for the bind user.                                                            |                                                                |
 | LDAP_SEARCH_BASE                    |           |                                  |                                                                                        | `DC=TESTMYLDAP,DC=COM`                                         |
 | LDAP_SEARCH_FILTER                  |           |                                  | Filter for search, for Microsoft Active Directory usually you can use `sAMAccountName`.| `(sAMAccountName={username})`                                  |
-| LDAP_SERVER_DOMAIN **(Optional)**   |           |                                  | Microsoft Active Directory usually need the domain name for authenticate the user.     | `TESTMYLDAP.COM`                                               |
+| LDAP_BIND_DN                        | `{username}` |                                  | Depends on your LDAP server the binding structure can change. This field support variable expansion for the username.     | `{username}@TESTMYLDAP.com` or `UID={username},OU=PEOPLE,DC=TESTMYLDAP,DC=COM` |
 | LDAP_ALLOWED_USERS **(Optional)** |            |                                  | Support a list separated by commas.| `'diego,john,s-master'` |
 | LDAP_ALLOWED_GROUPS **(Optional)** |           |                                  | Supports regular expressions, and support a list separated by commas.| `'DevOps production environment', 'Developers .* environment'` |
 | LDAP_ALLOWED_GROUPS_CONDITIONAL    | `and`     | `and`, `or`                      | Conditional to match all the groups in the list or just one of them.                   | `or`                                                           |
@@ -53,9 +55,9 @@ The variables send via HTTP headers take precedence over environment variables.
 - `Ldap-Endpoint`
 - `Ldap-Manager-Dn-Username`
 - `Ldap-Manager-Password`
+- `Ldap-Bind-DN`
 - `Ldap-Search-Base`
 - `Ldap-Search-Filter`
-- `Ldap-Server-Domain`
 - `Ldap-Allowed-Users`
 - `Ldap-Allowed-Groups`
 - `Ldap-Allowed-Groups-Case-Sensitive`
@@ -76,7 +78,7 @@ docker run -d \
     -e LDAP_ENDPOINT='ldaps://testmyldap.com:636' \
     -e LDAP_MANAGER_DN_USERNAME='CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM' \
     -e LDAP_MANAGER_PASSWORD='MasterpasswordNoHack123' \
-    -e LDAP_SERVER_DOMAIN='TESTMYLDAP.COM' \
+    -e LDAP_BIND_DN='{username}@TESTMYLDAP.COM' \
     -e LDAP_SEARCH_BASE='DC=TESTMYLDAP,DC=COM' \
     -e LDAP_SEARCH_FILTER='(sAMAccountName={username})' \
     -e LOG_FORMAT='JSON' \
@@ -162,3 +164,9 @@ spec:
 
 ## Known limitations
 - Parameters via headers need to be escaped, for example, you can not send parameters such as `$1` or `$test` because Nginx is applying variable expansion.
+
+## Breaking changes from v1.x to v2.x
+- `LDAP_REQUIRED_GROUPS` renamed to `LDAP_ALLOWED_USERS`
+- `LDAP_REQUIRED_GROUPS_CONDITIONAL` renamed to `LDAP_ALLOWED_GROUPS_CONDITIONAL`
+- `LDAP_REQUIRED_GROUPS_CASE_SENSITIVE` renamed to `LDAP_ALLOWED_GROUPS_CASE_SENSITIVE`
+- `LDAP_SERVER_DOMAIN` removed and replace by `LDAP_BIND_DN`

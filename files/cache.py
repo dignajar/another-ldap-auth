@@ -14,6 +14,12 @@ class Cache:
 
 		self.logs = Logs(self.__class__.__name__)
 
+	def __hash__(self, text:str) -> str:
+		'''
+			Returns a hash from a string
+		'''
+		return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
 	def settings(self, groupCaseSensitive:bool, groupConditional:str):
 		'''
 			Initiliaze settings for the cache
@@ -21,19 +27,13 @@ class Cache:
 		self.groupCaseSensitive = groupCaseSensitive
 		self.groupConditional = groupConditional
 
-	def hash(self, text:str) -> str:
-		'''
-			Returns a hash from a string
-		'''
-		return hashlib.sha256(text.encode('utf-8')).hexdigest()
-
 	def addUser(self, username:str, password:str):
 		'''
 			Add user to the cache
 		'''
 		if username not in self.cache:
 			self.logs.info({'message':'Adding user to the cache.', 'username': username})
-			passwordHash = self.hash(password)
+			passwordHash = self.__hash__(password)
 			self.cache[username] = {'password': passwordHash, 'matchedGroups': []}
 
 	def addGroups(self, username:str, matchedGroups:list):
@@ -57,7 +57,7 @@ class Cache:
 
 		if username in self.cache:
 			self.logs.info({'message':'Validating user via cache.', 'username': username})
-			passwordHash = self.hash(password)
+			passwordHash = self.__hash__(password)
 			if passwordHash == self.cache[username]['password']:
 				self.logs.info({'message':'Username and password validated by cache.', 'username': username})
 				return True
@@ -69,7 +69,7 @@ class Cache:
 		self.logs.info({'message':'User not found in the cache for authentication.', 'username': username})
 		return False
 
-	def findMatch(self, group:str, adGroup:str):
+	def __findMatch__(self, group:str, adGroup:str):
 		# Disable case sensitive
 		if not self.groupCaseSensitive:
 			adGroup = adGroup.lower()
@@ -92,7 +92,7 @@ class Cache:
 			matchesByGroup = []
 			cacheGroups = self.cache[username]['matchedGroups']
 			for group in groups:
-				matches = list(filter(None,list(map(self.findMatch, repeat(group), cacheGroups))))
+				matches = list(filter(None,list(map(self.__findMatch__, repeat(group), cacheGroups))))
 				if matches:
 					matchesByGroup.append((group,matches))
 					matchedGroups.extend(matches)
@@ -111,7 +111,7 @@ class Cache:
 				self.logs.error({'message':'Invalid conditional group.', 'username': username, 'conditional': self.groupConditional})
 				return False,[]
 
-			self.logs.error({'message':'Invalid groups from cache.', 'username': username, 'conditional': self.groupConditional})
+			self.logs.warning({'message':'Invalid groups from cache.', 'username': username, 'conditional': self.groupConditional})
 			self.cache[username]['matchedGroups'] = []
 			return False,[]
 

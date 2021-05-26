@@ -5,12 +5,12 @@ from itertools import repeat
 from logs import Logs
 
 class Aldap:
-	def __init__(self, ldapEndpoint, dnUsername, dnPassword, serverDomain, searchBase, searchFilter, groupCaseSensitive, groupConditional):
+	def __init__(self, ldapEndpoint, dnUsername, dnPassword, bindDN, searchBase, searchFilter, groupCaseSensitive, groupConditional):
 		self.ldapEndpoint = ldapEndpoint
 		self.searchBase = searchBase
 		self.dnUsername = dnUsername
 		self.dnPassword = dnPassword
-		self.serverDomain = serverDomain
+		self.bindDN = bindDN
 		self.searchFilter = searchFilter
 		self.groupConditional = groupConditional.lower()
 		self.groupCaseSensitive = groupCaseSensitive
@@ -27,8 +27,8 @@ class Aldap:
 			Authenticate user by username and password
 		'''
 		finalUsername = username
-		if self.serverDomain:
-			finalUsername = username+"@"+self.serverDomain
+		if self.bindDN:
+			finalUsername = self.bindDN.replace("{username}", username)
 
 		self.logs.info({'message':'Authenticating user.', 'username': username, 'finalUsername': finalUsername})
 
@@ -46,7 +46,7 @@ class Aldap:
 
 		return False
 
-	def getTree(self, searchFilter:str) -> list:
+	def __getTree__(self, searchFilter:str) -> list:
 		'''
 			Returns the AD tree for the user, the user is search by the searchFilter
 		'''
@@ -63,13 +63,13 @@ class Aldap:
 
 		return result
 
-	def decode(self, word:bytes) -> str:
+	def __decode__(self, word:bytes) -> str:
 		'''
 			Convert binary to string. b'test' => 'test'
 		'''
 		return word.decode("utf-8")
 
-	def findMatch(self, group:str, adGroup:str):
+	def __findMatch__(self, group:str, adGroup:str):
 		# Extract the Common Name from the string (letters, spaces and underscores)
 		adGroup = re.match('CN=((\w*\s?_?]*)*)', adGroup).group(1)
 
@@ -90,7 +90,7 @@ class Aldap:
 			Returns True if the groups are valid for the user, False otherwise
 		'''
 		searchFilter = self.searchFilter.replace("{username}", username)
-		tree = self.getTree(searchFilter)
+		tree = self.__getTree__(searchFilter)
 
 		# Crawl tree and extract the groups of the user
 		adGroups = []
@@ -101,13 +101,13 @@ class Aldap:
 				except TypeError:
 					None
 		# Create a list from the elements and convert binary to str the items
-		adGroups = list(map(self.decode,adGroups))
+		adGroups = list(map(self.__decode__,adGroups))
 
 		self.logs.info({'message':'Validating groups.', 'username': username, 'groups': ','.join(groups), 'conditional': self.groupConditional})
 		matchedGroups = []
 		matchesByGroup = []
 		for group in groups:
-			matches = list(filter(None,list(map(self.findMatch, repeat(group), adGroups))))
+			matches = list(filter(None,list(map(self.__findMatch__, repeat(group), adGroups))))
 			if matches:
 				matchesByGroup.append((group,matches))
 				matchedGroups.extend(matches)

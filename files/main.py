@@ -110,11 +110,11 @@ def login(username, password):
 		elif "LDAP_ALLOWED_USERS" in environ:
 			LDAP_ALLOWED_USERS = environ["LDAP_ALLOWED_USERS"]
 
-		LDAP_SERVER_DOMAIN = ""
-		if "Ldap-Server-Domain" in request.headers:
-			LDAP_SERVER_DOMAIN = request.headers["Ldap-Server-Domain"]
-		elif "LDAP_SERVER_DOMAIN" in environ:
-			LDAP_SERVER_DOMAIN = environ["LDAP_SERVER_DOMAIN"]
+		LDAP_BIND_DN = "{username}"
+		if "Ldap-Bind-DN" in request.headers:
+			LDAP_BIND_DN = request.headers["Ldap-Bind-DN"]
+		elif "LDAP_BIND_DN" in environ:
+			LDAP_BIND_DN = environ["LDAP_BIND_DN"]
 	except KeyError as e:
 		logs.error({'message': 'Invalid parameters.'})
 		return False
@@ -123,7 +123,7 @@ def login(username, password):
 		LDAP_ENDPOINT,
 		LDAP_MANAGER_DN_USERNAME,
 		LDAP_MANAGER_PASSWORD,
-		LDAP_SERVER_DOMAIN,
+		LDAP_BIND_DN,
 		LDAP_SEARCH_BASE,
 		LDAP_SEARCH_FILTER,
 		LDAP_ALLOWED_GROUPS_CASE_SENSITIVE,
