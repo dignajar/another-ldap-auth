@@ -12,9 +12,9 @@
 
 ## Features
 - Supports `ldap` and `ldaps`.
-- Provide a cache for users, you can limit the time of the cache.
-- Supports validation groups.
-- Supports validation groups with conditionals and regex.
+- Provide a cache for users and groups, you can set the cache expiration in minutes.
+- Supports validation by groups, regex in groups are supported.
+- Supports TLS via self-signed certificate.
 - Supports configuration via headers or via environment variables.
 - Supports HTTP response headers such as username and matched groups.
 - Log format in Plain-Text or JSON.
@@ -38,10 +38,10 @@ All values type are `string`.
 | LDAP_SEARCH_BASE                    |           |                                  |                                                                                        | `DC=TESTMYLDAP,DC=COM`                                         |
 | LDAP_SEARCH_FILTER                  |           |                                  | Filter for search, for Microsoft Active Directory usually you can use `sAMAccountName`.| `(sAMAccountName={username})`                                  |
 | LDAP_SERVER_DOMAIN **(Optional)**   |           |                                  | Microsoft Active Directory usually need the domain name for authenticate the user.     | `TESTMYLDAP.COM`                                               |
-| LDAP_MATCHING_USERS **(Optional)** |            |                                  | Support a list separated by commas.| `'diego,john,s-master'` |
-| LDAP_MATCHING_GROUPS **(Optional)** |           |                                  | Supports regular expressions, and support a list separated by commas.| `'DevOps production environment', 'Developers .* environment'` |
-| LDAP_MATCHING_GROUPS_CONDITIONAL    | `and`     | `and`, `or`                      | Conditional to match all the groups in the list or just one of them.                   | `or`                                                           |
-| LDAP_MATCHING_GROUPS_CASE_SENSITIVE | `enabled` | `enabled`, `disabled`            | Enabled or disabled case sensitive groups matches.                                     | `disabled`                                                     |
+| LDAP_ALLOWED_USERS **(Optional)** |            |                                  | Support a list separated by commas.| `'diego,john,s-master'` |
+| LDAP_ALLOWED_GROUPS **(Optional)** |           |                                  | Supports regular expressions, and support a list separated by commas.| `'DevOps production environment', 'Developers .* environment'` |
+| LDAP_ALLOWED_GROUPS_CONDITIONAL    | `and`     | `and`, `or`                      | Conditional to match all the groups in the list or just one of them.                   | `or`                                                           |
+| LDAP_ALLOWED_GROUPS_CASE_SENSITIVE | `enabled` | `enabled`, `disabled`            | Enabled or disabled case sensitive groups matches.                                     | `disabled`                                                     |
 | CACHE_EXPIRATION                    | `5`       |                                  | Cache expiration time in minutes.                                                      | `10`                                                           |
 | LOG_LEVEL                           | `INFO`    | `INFO`, `WARNING`, `ERROR`       | Logger level.                                                                          | `DEBUG`                                                        |
 | LOG_FORMAT                          | `TEXT`    | `TEXT`, `JSON`                   | Output format of the logger.                                                           | `JSON`                                                         |
@@ -56,10 +56,10 @@ The variables send via HTTP headers take precedence over environment variables.
 - `Ldap-Search-Base`
 - `Ldap-Search-Filter`
 - `Ldap-Server-Domain`
-- `Ldap-Matching-Users`
-- `Ldap-Matching-Groups`
-- `Ldap-Matching-Groups-Case-Sensitive`
-- `Ldap-Matching-Groups-Conditional`
+- `Ldap-Allowed-Users`
+- `Ldap-Allowed-Groups`
+- `Ldap-Allowed-Groups-Case-Sensitive`
+- `Ldap-Allowed-Groups-Conditional`
 
 ### HTTP response headers
 - `x-username` Contains the authenticated username
@@ -147,8 +147,8 @@ metadata:
     nginx.ingress.kubernetes.io/auth-url: https://another-ldap-auth.ingress-nginx
 
     # nginx.ingress.kubernetes.io/auth-snippet: |
-    #   proxy_set_header Ldap-Matching-Groups "<SOME GROUP>";
-    #   proxy_set_header Ldap-Matching-Groups-Conditional "or";
+    #   proxy_set_header Ldap-Allowed-Groups "<SOME GROUP>";
+    #   proxy_set_header Ldap-Allowed-Groups-Conditional "or";
 spec:
   rules:
   - host: demo.local
