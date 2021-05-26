@@ -20,7 +20,7 @@ RUN adduser -D $USER
 USER $USER
 WORKDIR $HOME
 
-COPY files/* $HOME
+COPY files/* $HOME/
 
 EXPOSE 9000
 CMD ["python3", "-u", "main.py"]
