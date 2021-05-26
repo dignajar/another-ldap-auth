@@ -10,6 +10,6 @@ spec:
     app: another-ldap-auth
   ports:
     - name: another-ldap-auth
-      port: 80
+      port: 443
       protocol: TCP
       targetPort: 9000

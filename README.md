@@ -20,7 +20,7 @@
 - Log format in Plain-Text or JSON.
 
 ## Diagram
-![Another LDAP Authentication](https://i.ibb.co/Fn1ncbP/another-ldap-authentication.jpg)
+![Another LDAP Authentication](https://i.ibb.co/crJ0Xr2/diagram-1.png)
 
 ## Available configurations parameters
 The parameters can be sent via environment variables or via HTTP headers, also you can combine them.
@@ -38,9 +38,10 @@ All values type are `string`.
 | LDAP_SEARCH_BASE                    |           |                                  |                                                                                        | `DC=TESTMYLDAP,DC=COM`                                         |
 | LDAP_SEARCH_FILTER                  |           |                                  | Filter for search, for Microsoft Active Directory usually you can use `sAMAccountName`.| `(sAMAccountName={username})`                                  |
 | LDAP_SERVER_DOMAIN **(Optional)**   |           |                                  | Microsoft Active Directory usually need the domain name for authenticate the user.     | `TESTMYLDAP.COM`                                               |
-| LDAP_REQUIRED_GROUPS **(Optional)** |           |                                  | Required groups, supports regular expressions, you can send a list separated by commas.| `'DevOps production environment', 'Developers .* environment'` |
-| LDAP_REQUIRED_GROUPS_CONDITIONAL    | `and`     | `and`, `or`                      | Conditional to match all the groups in the list or just one of them.                   | `or`                                                           |
-| LDAP_REQUIRED_GROUPS_CASE_SENSITIVE | `enabled` | `enabled`, `disabled`            | Enabled or disabled case sensitive groups matches.                                     | `disabled`                                                     |
+| LDAP_MATCHING_USERS **(Optional)** |            |                                  | Support a list separated by commas.| `'diego,john,s-master'` |
+| LDAP_MATCHING_GROUPS **(Optional)** |           |                                  | Supports regular expressions, and support a list separated by commas.| `'DevOps production environment', 'Developers .* environment'` |
+| LDAP_MATCHING_GROUPS_CONDITIONAL    | `and`     | `and`, `or`                      | Conditional to match all the groups in the list or just one of them.                   | `or`                                                           |
+| LDAP_MATCHING_GROUPS_CASE_SENSITIVE | `enabled` | `enabled`, `disabled`            | Enabled or disabled case sensitive groups matches.                                     | `disabled`                                                     |
 | CACHE_EXPIRATION                    | `5`       |                                  | Cache expiration time in minutes.                                                      | `10`                                                           |
 | LOG_LEVEL                           | `INFO`    | `INFO`, `WARNING`, `ERROR`       | Logger level.                                                                          | `DEBUG`                                                        |
 | LOG_FORMAT                          | `TEXT`    | `TEXT`, `JSON`                   | Output format of the logger.                                                           | `JSON`                                                         |
@@ -55,9 +56,10 @@ The variables send via HTTP headers take precedence over environment variables.
 - `Ldap-Search-Base`
 - `Ldap-Search-Filter`
 - `Ldap-Server-Domain`
-- `Ldap-Required-Groups`
-- `Ldap-Required-Groups-Case-Sensitive`
-- `Ldap-Required-Groups-Conditional`
+- `Ldap-Matching-Users`
+- `Ldap-Matching-Groups`
+- `Ldap-Matching-Groups-Case-Sensitive`
+- `Ldap-Matching-Groups-Conditional`
 
 ### HTTP response headers
 - `x-username` Contains the authenticated username
@@ -77,6 +79,7 @@ docker run -d \
     -e LDAP_SERVER_DOMAIN='TESTMYLDAP.COM' \
     -e LDAP_SEARCH_BASE='DC=TESTMYLDAP,DC=COM' \
     -e LDAP_SEARCH_FILTER='(sAMAccountName={username})' \
+    -e LOG_FORMAT='JSON' \
     -p 9000:9000 \
     --name another_ldap_auth \
     dignajar/another-ldap-auth:latest
@@ -84,10 +87,26 @@ docker run -d \
 
 **Another LDAP Authentication** now is running on `http://localhost:9000`.
 
+Test it via curl:
+```
+curl -vvv http://localhost:9000 -u diego:mypassword
+```
+
+Output from ALDAP:
+```
+{"date": "2021-05-21 10:06:52", "level": "INFO", "objectName": "Cache", "ip": "192.168.0.10", "referrer": null, "message": "User not found in the cache.", "username": "diego"}
+{"date": "2021-05-21 10:06:52", "level": "INFO", "objectName": "Aldap", "ip": "192.168.0.10", "referrer": null, "message": "Authenticating user.", "username": "diego", "finalUsername": "diego"}
+{"date": "2021-05-21 10:06:53", "level": "INFO", "objectName": "Aldap", "ip": "192.168.0.10", "referrer": null, "message": "Authentication successful.", "username": "diego", "elapsedTime": "0.22335"}
+{"date": "2021-05-21 10:06:53", "level": "INFO", "objectName": "Cache", "ip": "192.168.0.10", "referrer": null, "message": "Adding user to the cache.", "username": "diego"}
+192.168.0.10 - - [21/May/2021 10:06:53] "GET / HTTP/1.1" 200 -
+```
+
+> Remember you can enable self-signed certificate from Flask via the environment variable `LDAP_HTTPS_SUPPORT=="enabled"`.
+
 ### Step 2 - Nginx configuration
 Nginx use the module [ngx_http_auth_request_module](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) to do the subrequest.
 
-The following example shows how to configure Nginx which is running in the same machine as **Another LDAP Authentication**. The backend `/private/` includes the authentication request to `/another_ldap_auth`.
+The following example shows how to configure Nginx that is running in the same machine as **Another LDAP Authentication**. The backend `/private/` includes the authentication request to `/another_ldap_auth`.
 
 ```
 location /private/ {
@@ -106,16 +125,16 @@ location = /another_ldap_auth {
 
 Now you can access to your website wich is going to be something like this `http://myserver.com/private/` and Nginx will request you to write the username and password.
 
-## Deploy in Kubernetes with Nginx ingress controller
-Get the K8s manifest from the folder `/kubernetes` from this repository.
+## Deploy to Kubernetes with Nginx ingress controller
+Get the K8s manifests from the folder `/kubernetes`.
 
-The manifests for K8s helps to deploy **Another LDAP Authentication** in the namespace `ingress-nginx` and expose the service in the cluster at the following address `http://another-ldap-auth.ingress-nginx`.
+The manifests for K8s helps to deploy **Another LDAP Authentication** in the namespace `ingress-nginx` and expose the service in the cluster at the following address `https://another-ldap-auth.ingress-nginx`.
 
 Please change the environment variables from the manifest and the secret for the bind username.
 
-After you have running **Another LDAP Authentication** in your Kubernetes, you can modify the ingress manifest for the application you want to protect.
+After you have running **Another LDAP Authentication** in your Kubernetes, you can modify the ingress manifest from the application you want to protect.
 
-You can remove the comment `#` and send headers as variables such as `Required groups`.
+You can remove the comment `#` and send headers as variables such as `Matching groups`.
 
 ```
 ---
@@ -125,11 +144,11 @@ metadata:
   name: demo-webserver
   namespace: demo
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: http://another-ldap-auth.ingress-nginx
+    nginx.ingress.kubernetes.io/auth-url: https://another-ldap-auth.ingress-nginx
 
     # nginx.ingress.kubernetes.io/auth-snippet: |
-    #   proxy_set_header Ldap-Required-Groups "<SOME GROUP>";
-    #   proxy_set_header Ldap-Required-Groups-Conditional "or";
+    #   proxy_set_header Ldap-Matching-Groups "<SOME GROUP>";
+    #   proxy_set_header Ldap-Matching-Groups-Conditional "or";
 spec:
   rules:
   - host: demo.local
