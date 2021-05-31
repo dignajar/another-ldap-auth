@@ -148,9 +148,12 @@ def login(username, password):
 		matchingUsers = LDAP_ALLOWED_USERS.split(",") # Convert string to list
 		matchingUsers = list(map(cleanMatchingUsers, matchingUsers))
 		if username in matchingUsers:
-			logs.info({'message':'Username inside the matching users list.', 'username': username, 'matchingUsers': ','.join(matchingUsers)})
+			logs.info({'message':'Username inside the allowed users list.', 'username': username, 'matchingUsers': ','.join(matchingUsers)})
 			setRegister(username, [])
 			return True
+		elif not LDAP_ALLOWED_GROUPS:
+			logs.info({'message':'Username not found inside the allowed users list.', 'username': username, 'matchingUsers': ','.join(matchingUsers)})
+			return False
 
 	# Validate user via matching groups
 	matchedGroups = []
