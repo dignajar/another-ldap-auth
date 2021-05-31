@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: dignajar/another-ldap-auth
   pullPolicy: IfNotPresent
-  tag: "1.9"
+  tag: "2.0.1"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -12,16 +12,16 @@ fullnameOverride: ""
 # AD config
 ldap:
   existingSecret:
-  logLevel: INFO
+  logLevel: "INFO"
+  logFormat: "TEXT"
   cacheExpiration: 10
   httpsSupport: "enabled"
   endpoint: "ldaps://testmyldap.com:636"
   managerDnUsername: "CN=john,OU=Administrators,DC=TESTMYLDAP,DC=COM"
   managerDnPassword:
-  serverDomain: "TESTMYLDAP.COM"
+  bindDN: "{username}@TESTMYLDAP.com"
   searchBase: "DC=TESTMYLDAP,DC=COM"
   searchFilter: "(sAMAccountName={username})"
-
 
 serviceAccount:
   # Specifies whether a service account should be created

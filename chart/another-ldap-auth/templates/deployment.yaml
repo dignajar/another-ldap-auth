@@ -42,14 +42,16 @@ spec:
               value: {{ .Values.ldap.httpsSupport }}
             - name: LDAP_MANAGER_DN_USERNAME
               value: {{ .Values.ldap.managerDnUsername }}
-            - name: LDAP_SERVER_DOMAIN
-              value: {{ .Values.ldap.serverDomain }}
+            - name: LDAP_BIND_DN
+              value: {{ .Values.ldap.bindDN }}
             - name: LDAP_SEARCH_BASE
               value: {{ .Values.ldap.searchBase }}
             - name: LDAP_SEARCH_FILTER
               value: {{ .Values.ldap.searchFilter }}
             - name: LOG_LEVEL
               value: {{ .Values.ldap.logLevel }}
+            - name: LOG_FORMAT
+              value: {{ .Values.ldap.logFormat }}
             - name: LDAP_MANAGER_PASSWORD
               valueFrom:
                 secretKeyRef:
