@@ -71,7 +71,7 @@ class Aldap:
 
 	def __findMatch__(self, group:str, adGroup:str):
 		# Extract the Common Name from the string (letters, spaces and underscores)
-		adGroup = re.match('CN=((\w*\s?_?-?]*)*)', adGroup).group(1)
+		adGroup = re.match('CN=((\w*\s?_?-?)*)', adGroup).group(1)
 
 		# Disable case sensitive
 		if not self.groupCaseSensitive:
