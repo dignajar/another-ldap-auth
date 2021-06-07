@@ -3,7 +3,7 @@ name: another-ldap-auth
 description: A Helm chart using another-ldap-auth to enable AD or LDAP based basic-authentication for ingress resources
 type: application
 version: 0.2.0
-appVersion: 2.0.1
+appVersion: 2.0.2
 keywords:
   - ingress
   - nginx
