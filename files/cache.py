@@ -87,10 +87,10 @@ class Cache:
 			Returns True if the groups are valid for the user, False otherwise
 		'''
 		if username in self.cache:
-			self.logs.info({'message':'Validating groups via cache.', 'username': username})
 			matchedGroups = []
 			matchesByGroup = []
 			cacheGroups = self.cache[username]['matchedGroups']
+			self.logs.info({'message':'Validating groups via cache.', 'username': username, 'cacheGroups': ','.join(cacheGroups)})
 			for group in groups:
 				matches = list(filter(None,list(map(self.__findMatch__, repeat(group), cacheGroups))))
 				if matches:
@@ -112,7 +112,6 @@ class Cache:
 				return False,[]
 
 			self.logs.warning({'message':'Invalid groups from cache.', 'username': username, 'conditional': self.groupConditional})
-			self.cache[username]['matchedGroups'] = []
 			return False,[]
 
 		self.logs.info({'message':'User not found in the cache for validate groups.', 'username': username})
