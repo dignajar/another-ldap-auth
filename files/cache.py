@@ -42,7 +42,7 @@ class Cache:
 		'''
 		if username in self.cache:
 			self.logs.info({'message':'Adding groups to the cache.', 'username': username, 'matchedGroups': ','.join(matchedGroups)})
-			self.cache[username]['matchedGroups'] = matchedGroups
+			self.cache[username]['matchedGroups'] = list(set(self.cache[username]['matchedGroups'] + matchedGroups))
 
 	def validateUser(self, username:str, password:str) -> bool:
 		'''
