@@ -70,7 +70,7 @@ class Aldap:
 		return word.decode("utf-8")
 
 	def __findMatch__(self, group:str, adGroup:str):
-		# Extract the Common Name from the string (letters, spaces and underscores)
+		# Extract the Common Name from the string (letters, spaces, underscores and hyphen)
 		adGroup = re.match('CN=((\w*\s?_?-?)*)', adGroup).group(1)
 
 		# Disable case sensitive
