@@ -19,23 +19,25 @@ FLASK_SECRET_KEY = "CHANGE_ME!"
 if "FLASK_SECRET_KEY" in environ:
 	FLASK_SECRET_KEY = str(environ["FLASK_SECRET_KEY"])
 
-# Expiration in minutes
+# Cache expiration in minutes
 CACHE_EXPIRATION = 5
 if "CACHE_EXPIRATION" in environ:
 	CACHE_EXPIRATION = int(environ["CACHE_EXPIRATION"])
 
-# Expiration in minutes
+# Brute force enable or disable
+BRUTE_FORCE_PROTECTION = False
+if "BRUTE_FORCE_PROTECTION" in environ:
+	BRUTE_FORCE_PROTECTION = (environ["BRUTE_FORCE_PROTECTION"] == "enabled")
+
+# Brute force expiration in minutes
 BRUTE_FORCE_EXPIRATION = 2
 if "BRUTE_FORCE_EXPIRATION" in environ:
 	BRUTE_FORCE_EXPIRATION = int(environ["BRUTE_FORCE_EXPIRATION"])
 
+# Brute force amount of failures
 BRUTE_FORCE_FAILURES = 3
 if "BRUTE_FORCE_FAILURES" in environ:
 	BRUTE_FORCE_FAILURES = int(environ["BRUTE_FORCE_FAILURES"])
-
-BRUTE_FORCE_PROTECTION = False
-if "BRUTE_FORCE_PROTECTION" in environ:
-	BRUTE_FORCE_PROTECTION = (environ["BRUTE_FORCE_PROTECTION"] == "enabled")
 
 # --- Functions ---------------------------------------------------------------
 def cleanMatchingUsers(item:str):
