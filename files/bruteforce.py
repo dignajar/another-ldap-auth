@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from logs import Logs
-from flask import request
 
 class BruteForce:
 	def __init__(self, enabled:bool, expirationMinutes:int, blockAfterFailures:int):
