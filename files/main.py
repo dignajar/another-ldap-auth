@@ -6,6 +6,7 @@ from os import environ
 from aldap import Aldap
 from cache import Cache
 from logs import Logs
+from bruteforce import BruteForce
 
 # --- Parameters --------------------------------------------------------------
 # Enable or disable SSL self-signed certificate
@@ -22,6 +23,19 @@ if "FLASK_SECRET_KEY" in environ:
 CACHE_EXPIRATION = 5
 if "CACHE_EXPIRATION" in environ:
 	CACHE_EXPIRATION = int(environ["CACHE_EXPIRATION"])
+
+# Expiration in minutes
+BRUTE_FORCE_EXPIRATION = 2
+if "BRUTE_FORCE_EXPIRATION" in environ:
+	BRUTE_FORCE_EXPIRATION = int(environ["BRUTE_FORCE_EXPIRATION"])
+
+BRUTE_FORCE_FAILURES = 3
+if "BRUTE_FORCE_FAILURES" in environ:
+	BRUTE_FORCE_FAILURES = int(environ["BRUTE_FORCE_FAILURES"])
+
+BRUTE_FORCE_ENABLED = False
+if "BRUTE_FORCE_ENABLED" in environ:
+	BRUTE_FORCE_ENABLED = (environ["BRUTE_FORCE_ENABLED"] == "enabled")
 
 # --- Functions ---------------------------------------------------------------
 def cleanMatchingUsers(item:str):
@@ -46,6 +60,9 @@ logs = Logs('main')
 # --- Cache -------------------------------------------------------------------
 cache = Cache(CACHE_EXPIRATION)
 
+# --- Brute Force -------------------------------------------------------------
+bruteForce = BruteForce(BRUTE_FORCE_ENABLED, BRUTE_FORCE_EXPIRATION, BRUTE_FORCE_FAILURES)
+
 # --- Flask -------------------------------------------------------------------
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -54,6 +71,9 @@ auth = HTTPBasicAuth()
 def login(username, password):
 	if not username or not password:
 		logs.error({'message': 'Username or password empty.'})
+		return False
+
+	if bruteForce.isBlocked():
 		return False
 
 	try:
@@ -141,6 +161,7 @@ def login(username, password):
 		if aldap.authenticateUser(username, password):
 			cache.addUser(username, password)
 		else:
+			bruteForce.addFailure()
 			return False
 
 	# Validate user via matching users
