@@ -33,9 +33,9 @@ BRUTE_FORCE_FAILURES = 3
 if "BRUTE_FORCE_FAILURES" in environ:
 	BRUTE_FORCE_FAILURES = int(environ["BRUTE_FORCE_FAILURES"])
 
-BRUTE_FORCE_ENABLED = False
-if "BRUTE_FORCE_ENABLED" in environ:
-	BRUTE_FORCE_ENABLED = (environ["BRUTE_FORCE_ENABLED"] == "enabled")
+BRUTE_FORCE_PROTECTION = False
+if "BRUTE_FORCE_PROTECTION" in environ:
+	BRUTE_FORCE_PROTECTION = (environ["BRUTE_FORCE_PROTECTION"] == "enabled")
 
 # --- Functions ---------------------------------------------------------------
 def cleanMatchingUsers(item:str):
@@ -54,6 +54,9 @@ def setRegister(username:str, matchedGroups:list):
 def getRegister(key):
 	return g.get(key)
 
+def getUserIp():
+	return request.remote_addr
+
 # --- Logging -----------------------------------------------------------------
 logs = Logs('main')
 
@@ -61,7 +64,7 @@ logs = Logs('main')
 cache = Cache(CACHE_EXPIRATION)
 
 # --- Brute Force -------------------------------------------------------------
-bruteForce = BruteForce(BRUTE_FORCE_ENABLED, BRUTE_FORCE_EXPIRATION, BRUTE_FORCE_FAILURES)
+bruteForce = BruteForce(BRUTE_FORCE_PROTECTION, BRUTE_FORCE_EXPIRATION, BRUTE_FORCE_FAILURES)
 
 # --- Flask -------------------------------------------------------------------
 app = Flask(__name__)
@@ -73,7 +76,7 @@ def login(username, password):
 		logs.error({'message': 'Username or password empty.'})
 		return False
 
-	if bruteForce.isBlocked():
+	if bruteForce.isIpBlocked(getUserIp()):
 		return False
 
 	try:
@@ -161,7 +164,7 @@ def login(username, password):
 		if aldap.authenticateUser(username, password):
 			cache.addUser(username, password)
 		else:
-			bruteForce.addFailure()
+			bruteForce.addFailure(getUserIp())
 			return False
 
 	# Validate user via matching users
