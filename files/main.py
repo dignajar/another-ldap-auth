@@ -29,8 +29,8 @@ BRUTE_FORCE_PROTECTION = False
 if "BRUTE_FORCE_PROTECTION" in environ:
 	BRUTE_FORCE_PROTECTION = (environ["BRUTE_FORCE_PROTECTION"] == "enabled")
 
-# Brute force expiration in minutes
-BRUTE_FORCE_EXPIRATION = 2
+# Brute force expiration in seconds
+BRUTE_FORCE_EXPIRATION = 10
 if "BRUTE_FORCE_EXPIRATION" in environ:
 	BRUTE_FORCE_EXPIRATION = int(environ["BRUTE_FORCE_EXPIRATION"])
 

@@ -2,10 +2,10 @@ from datetime import datetime, timedelta
 from logs import Logs
 
 class BruteForce:
-	def __init__(self, enabled:bool, expirationMinutes:int, blockAfterFailures:int):
+	def __init__(self, enabled:bool, expirationSeconds:int, blockAfterFailures:int):
 		self.database = {}
 		self.enabled = enabled
-		self.expirationMinutes = expirationMinutes
+		self.expirationSeconds = expirationSeconds
 		self.blockAfterFailures = blockAfterFailures
 		self.logs = Logs(self.__class__.__name__)
 
@@ -20,7 +20,7 @@ class BruteForce:
 		# Check if this is the first time that the IP will be in the database
 		if ip not in self.database:
 			self.logs.info({'message':'Starting IP failure counter.', 'ip': ip, 'failures': '1'})
-			blockUntil = datetime.now() + timedelta(minutes=self.expirationMinutes)
+			blockUntil = datetime.now() + timedelta(seconds=self.expirationSeconds)
 			self.database[ip] = {'counter': 1, 'blockUntil': blockUntil}
 		else:
 			# Check if the IP expire and renew the database for that IP
@@ -35,7 +35,7 @@ class BruteForce:
 
 			# The IP already match the amount of failures, block the IP
 			if self.database[ip]['counter'] >= self.blockAfterFailures:
-				self.database[ip]['blockUntil'] = datetime.now() + timedelta(minutes=self.expirationMinutes)
+				self.database[ip]['blockUntil'] = datetime.now() + timedelta(seconds=self.expirationSeconds)
 				self.logs.warning({'message':'IP blocked.', 'ip': ip, 'blockUntil': str(self.database[ip]['blockUntil'])})
 
 		return False

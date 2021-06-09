@@ -49,7 +49,7 @@ All values type are `string`.
 | LOG_FORMAT                          | `TEXT`    | `TEXT`, `JSON`                   | Output format of the logger.                                                           | `JSON`                                                         |
 | LDAP_HTTPS_SUPPORT                  | `disabled`| `enabled`, `disabled`            | Enabled or disabled HTTPS support with self signed certificate.                        |                                                                |
 | BRUTE_FORCE_PROTECTION              | `disabled`| `enabled`, `disabled`            | Enabled or disabled Brute force protection per IP. | |
-| BRUTE_FORCE_EXPIRATION              | `2`|                                         | Brute force expiration time in minutes per IP. | |
+| BRUTE_FORCE_EXPIRATION              | `10`|                                         | Brute force expiration time in seconds per IP. | |
 | BRUTE_FORCE_FAILURES                | `3`|                                         | Number of failures before the IP is blocked.  | |
 
 ### HTTP request headers
@@ -165,9 +165,12 @@ spec:
           servicePort: 80
 ```
 
+## Brute Force protection
+Brute force protection is blocking user IP, please read this article to know the limitations about blocking IPs
+- https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks
+
 ## Known limitations
 - Parameters via headers need to be escaped, for example, you can not send parameters such as `$1` or `$test` because Nginx is applying variable expansion.
-- Brute force protection is blocking user IP, please read this article to know the limitations about blocking the IP https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks
 
 ## Breaking changes from v1.x to v2.x
 - `LDAP_REQUIRED_GROUPS` renamed to `LDAP_ALLOWED_USERS`
