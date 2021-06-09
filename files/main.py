@@ -208,6 +208,13 @@ def index(path):
 	headers = [('x-username', getRegister('username')),('x-groups', getRegister('matchedGroups'))]
 	return msg, code, headers
 
+# Overwrite response
+@app.after_request
+def remove_header(response):
+	# Change "Server:" header to avoid display server properties
+    response.headers['Server'] = ''
+    return response
+
 # Main
 if __name__ == '__main__':
 	app.secret_key = FLASK_SECRET_KEY
