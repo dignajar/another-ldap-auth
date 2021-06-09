@@ -28,6 +28,7 @@ class BruteForce:
 				self.logs.info({'message':'IP expired, removing from database.', 'ip': ip})
 				del self.database[ip]
 				self.addFailure(ip)
+				return False
 
 			# The IP is already in the database, increase the failure counter
 			self.database[ip]['counter'] = self.database[ip]['counter'] + 1
