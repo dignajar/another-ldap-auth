@@ -19,20 +19,20 @@ class BruteForce:
 
 		# Check if this is the first time that the IP will be in the database
 		if ip not in self.database:
-			self.logs.info({'message':'Starting IP failure counter.', 'ip': ip, 'failures': '1'})
+			self.logs.info({'message':'Start IP failure counter.', 'ip': ip, 'failures': '1'})
 			blockUntil = datetime.now() + timedelta(seconds=self.expirationSeconds)
 			self.database[ip] = {'counter': 1, 'blockUntil': blockUntil}
 		else:
 			# Check if the IP expire and renew the database for that IP
 			if self.database[ip]['blockUntil'] < datetime.now():
-				self.logs.info({'message':'IP expired, removing from database.', 'ip': ip})
+				self.logs.info({'message':'IP failure counter expired, removing IP...', 'ip': ip})
 				del self.database[ip]
 				self.addFailure(ip)
 				return False
 
 			# The IP is already in the database, increase the failure counter
 			self.database[ip]['counter'] = self.database[ip]['counter'] + 1
-			self.logs.info({'message':'Increased IP failure counter.', 'ip': ip, 'failures': str(self.database[ip]['counter'])})
+			self.logs.info({'message':'Increase IP failure counter.', 'ip': ip, 'failures': str(self.database[ip]['counter'])})
 
 			# The IP already match the amount of failures, block the IP
 			if self.database[ip]['counter'] >= self.blockAfterFailures:
