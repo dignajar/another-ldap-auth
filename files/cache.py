@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import hashlib
 import re
 from itertools import repeat
-from typing import Union
 from logs import Logs
 class Cache:
 	def __init__(self, expirationMinutes:int):

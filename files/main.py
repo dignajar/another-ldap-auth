@@ -6,6 +6,7 @@ from os import environ
 from aldap import Aldap
 from cache import Cache
 from logs import Logs
+from bruteforce import BruteForce
 
 # --- Parameters --------------------------------------------------------------
 # Enable or disable SSL self-signed certificate
@@ -18,10 +19,25 @@ FLASK_SECRET_KEY = "CHANGE_ME!"
 if "FLASK_SECRET_KEY" in environ:
 	FLASK_SECRET_KEY = str(environ["FLASK_SECRET_KEY"])
 
-# Expiration in minutes
+# Cache expiration in minutes
 CACHE_EXPIRATION = 5
 if "CACHE_EXPIRATION" in environ:
 	CACHE_EXPIRATION = int(environ["CACHE_EXPIRATION"])
+
+# Brute force enable or disable
+BRUTE_FORCE_PROTECTION = False
+if "BRUTE_FORCE_PROTECTION" in environ:
+	BRUTE_FORCE_PROTECTION = (environ["BRUTE_FORCE_PROTECTION"] == "enabled")
+
+# Brute force expiration in seconds
+BRUTE_FORCE_EXPIRATION = 10
+if "BRUTE_FORCE_EXPIRATION" in environ:
+	BRUTE_FORCE_EXPIRATION = int(environ["BRUTE_FORCE_EXPIRATION"])
+
+# Brute force amount of failures
+BRUTE_FORCE_FAILURES = 3
+if "BRUTE_FORCE_FAILURES" in environ:
+	BRUTE_FORCE_FAILURES = int(environ["BRUTE_FORCE_FAILURES"])
 
 # --- Functions ---------------------------------------------------------------
 def cleanMatchingUsers(item:str):
@@ -40,11 +56,17 @@ def setRegister(username:str, matchedGroups:list):
 def getRegister(key):
 	return g.get(key)
 
+def getUserIp():
+	return request.remote_addr
+
 # --- Logging -----------------------------------------------------------------
 logs = Logs('main')
 
 # --- Cache -------------------------------------------------------------------
 cache = Cache(CACHE_EXPIRATION)
+
+# --- Brute Force -------------------------------------------------------------
+bruteForce = BruteForce(BRUTE_FORCE_PROTECTION, BRUTE_FORCE_EXPIRATION, BRUTE_FORCE_FAILURES)
 
 # --- Flask -------------------------------------------------------------------
 app = Flask(__name__)
@@ -54,6 +76,9 @@ auth = HTTPBasicAuth()
 def login(username, password):
 	if not username or not password:
 		logs.error({'message': 'Username or password empty.'})
+		return False
+
+	if bruteForce.isIpBlocked(getUserIp()):
 		return False
 
 	try:
@@ -141,6 +166,7 @@ def login(username, password):
 		if aldap.authenticateUser(username, password):
 			cache.addUser(username, password)
 		else:
+			bruteForce.addFailure(getUserIp())
 			return False
 
 	# Validate user via matching users
@@ -181,6 +207,13 @@ def index(path):
 	msg = "Another LDAP Auth"
 	headers = [('x-username', getRegister('username')),('x-groups', getRegister('matchedGroups'))]
 	return msg, code, headers
+
+# Overwrite response
+@app.after_request
+def remove_header(response):
+	# Change "Server:" header to avoid display server properties
+    response.headers['Server'] = ''
+    return response
 
 # Main
 if __name__ == '__main__':
