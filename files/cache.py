@@ -70,7 +70,10 @@ class Cache:
 
 	def __findMatch__(self, group:str, adGroup:str):
 		# Extract the Common Name from the string (letters, spaces, underscores and hyphens)
-		adGroup = re.match('(?i)CN=((\w*\s?_?-?)*)', adGroup).group(1)
+		try:
+			adGroup = re.match('(?i)CN=((\w*\s?_?-?)*)', adGroup).group(1)
+		except AttributeError:
+			return None
 
 		# Disable case sensitive
 		if not self.groupCaseSensitive:
