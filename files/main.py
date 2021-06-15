@@ -135,6 +135,16 @@ def login(username, password):
 		elif "LDAP_ALLOWED_USERS" in environ:
 			LDAP_ALLOWED_USERS = environ["LDAP_ALLOWED_USERS"]
 
+		# The default is "or", another option is "and"
+		LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL = "or"
+		if "Ldap-Allowed-Groups-Users-Conditional" in request.headers:
+			LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL = request.headers["Ldap-Allowed-Groups-Users-Conditional"]
+		elif "LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL" in environ:
+			LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL = environ["LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL"]
+		if LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL not in ['or','and']:
+			logs.error({'message':'Invalid conditional for groups and user matching.', 'username': username, 'conditional': LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL })
+			return False
+
 		LDAP_BIND_DN = "{username}"
 		if "Ldap-Bind-DN" in request.headers:
 			LDAP_BIND_DN = request.headers["Ldap-Bind-DN"]
@@ -175,8 +185,9 @@ def login(username, password):
 		matchingUsers = list(map(cleanMatchingUsers, matchingUsers))
 		if username in matchingUsers:
 			logs.info({'message':'Username inside the allowed users list.', 'username': username, 'matchingUsers': ','.join(matchingUsers)})
-			setRegister(username, [])
-			return True
+			if LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL == 'or':
+				setRegister(username, [])
+				return True
 		elif not LDAP_ALLOWED_GROUPS:
 			logs.info({'message':'Username not found inside the allowed users list.', 'username': username, 'matchingUsers': ','.join(matchingUsers)})
 			return False

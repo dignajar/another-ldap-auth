@@ -32,25 +32,26 @@ The parameter `LDAP_BIND_DN` support variable expansion with the username, you c
 All values type are `string`.
 
 ### Environment variables
-| Key                                 | Default   | Values                           | Description                                                                            | Example                                                        |
-| ----------------------------------- | --------- | ---------------------------------| ---------------------------------------------------------------------------------------| ---------------------------------------------------------------|
-| LDAP_ENDPOINT                       |           |                                  | LDAP URL with the protocol and the port number.                                        | `ldaps://testmyldap.com:636`                                   |
-| LDAP_MANAGER_DN_USERNAME            |           |                                  | Username to bind and search in the LDAP tree.                                          | `CN=john,OU=Administrators,DC=TESTMYLDAP,DC=COM`               |
-| LDAP_MANAGER_PASSWORD               |           |                                  | Password for the bind user.                                                            |                                                                |
-| LDAP_SEARCH_BASE                    |           |                                  |                                                                                        | `DC=TESTMYLDAP,DC=COM`                                         |
-| LDAP_SEARCH_FILTER                  |           |                                  | Filter for search, for Microsoft Active Directory usually you can use `sAMAccountName`.| `(sAMAccountName={username})`                                  |
-| LDAP_BIND_DN                        | `{username}` |                                  | Depends on your LDAP server the binding structure can change. This field support variable expansion for the username.     | `{username}@TESTMYLDAP.com` or `UID={username},OU=PEOPLE,DC=TESTMYLDAP,DC=COM` |
-| LDAP_ALLOWED_USERS **(Optional)** |            |                                  | Support a list separated by commas.| `'diego,john,s-master'` |
-| LDAP_ALLOWED_GROUPS **(Optional)** |           |                                  | Supports regular expressions, and support a list separated by commas.| `'DevOps production environment', 'Developers .* environment'` |
-| LDAP_ALLOWED_GROUPS_CONDITIONAL    | `and`     | `and`, `or`                      | Conditional to match all the groups in the list or just one of them.                   | `or`                                                           |
-| LDAP_ALLOWED_GROUPS_CASE_SENSITIVE | `enabled` | `enabled`, `disabled`            | Enabled or disabled case sensitive groups matches.                                     | `disabled`                                                     |
-| CACHE_EXPIRATION                    | `5`       |                                  | Cache expiration time in minutes.                                                      | `10`                                                           |
-| LOG_LEVEL                           | `INFO`    | `INFO`, `WARNING`, `ERROR`       | Logger level.                                                                          | `DEBUG`                                                        |
-| LOG_FORMAT                          | `TEXT`    | `TEXT`, `JSON`                   | Output format of the logger.                                                           | `JSON`                                                         |
-| LDAP_HTTPS_SUPPORT                  | `disabled`| `enabled`, `disabled`            | Enabled or disabled HTTPS support with self signed certificate.                        |                                                                |
-| BRUTE_FORCE_PROTECTION              | `disabled`| `enabled`, `disabled`            | Enabled or disabled Brute force protection per IP. | |
-| BRUTE_FORCE_EXPIRATION              | `10`|                                         | Brute force expiration time in seconds per IP. | |
-| BRUTE_FORCE_FAILURES                | `3`|                                         | Number of failures before the IP is blocked.  | |
+| Key                                   | Default   | Values                           | Description                                                                            | Example                                                        |
+| ------------------------------------- | --------- | ---------------------------------| ---------------------------------------------------------------------------------------| ---------------------------------------------------------------|
+| LDAP_ENDPOINT                         |           |                                  | LDAP URL with the protocol and the port number.                                        | `ldaps://testmyldap.com:636`                                   |
+| LDAP_MANAGER_DN_USERNAME              |           |                                  | Username to bind and search in the LDAP tree.                                          | `CN=john,OU=Administrators,DC=TESTMYLDAP,DC=COM`               |
+| LDAP_MANAGER_PASSWORD                 |           |                                  | Password for the bind user.                                                            |                                                                |
+| LDAP_SEARCH_BASE                      |           |                                  |                                                                                        | `DC=TESTMYLDAP,DC=COM`                                         |
+| LDAP_SEARCH_FILTER                    |           |                                  | Filter for search, for Microsoft Active Directory usually you can use `sAMAccountName`.| `(sAMAccountName={username})`                                  |
+| LDAP_BIND_DN                          | `{username}` |                                  | Depends on your LDAP server the binding structure can change. This field support variable expansion for the username.     | `{username}@TESTMYLDAP.com` or `UID={username},OU=PEOPLE,DC=TESTMYLDAP,DC=COM` |
+| LDAP_ALLOWED_USERS **(Optional)**     |            |                                  | Support a list separated by commas.| `'diego,john,s-master'` |
+| LDAP_ALLOWED_GROUPS **(Optional)**    |           |                                  | Supports regular expressions, and support a list separated by commas.| `'DevOps production environment', 'Developers .* environment'` |
+| LDAP_ALLOWED_GROUPS_CONDITIONAL       | `and`     | `and`, `or`                      | Conditional to match all the groups in the list or just one of them.                   | `or`                                                           |
+| LDAP_ALLOWED_GROUPS_CASE_SENSITIVE    | `enabled` | `enabled`, `disabled`            | Enabled or disabled case sensitive groups matches.                                     | `disabled`                                                     |
+| LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL | `or`      | `and`, `or`                      | Conditional to match user and at least one group in the list, or one of the two        | `and`                                                          |
+| CACHE_EXPIRATION                      | `5`       |                                  | Cache expiration time in minutes.                                                      | `10`                                                           |
+| LOG_LEVEL                             | `INFO`    | `INFO`, `WARNING`, `ERROR`       | Logger level.                                                                          | `DEBUG`                                                        |
+| LOG_FORMAT                            | `TEXT`    | `TEXT`, `JSON`                   | Output format of the logger.                                                           | `JSON`                                                         |
+| LDAP_HTTPS_SUPPORT                    | `disabled`| `enabled`, `disabled`            | Enabled or disabled HTTPS support with self signed certificate.                        |                                                                |
+| BRUTE_FORCE_PROTECTION                | `disabled`| `enabled`, `disabled`            | Enabled or disabled Brute force protection per IP. | |
+| BRUTE_FORCE_EXPIRATION                | `10`|                                         | Brute force expiration time in seconds per IP. | |
+| BRUTE_FORCE_FAILURES                  | `3`|                                         | Number of failures before the IP is blocked.  | |
 
 ### HTTP request headers
 The variables send via HTTP headers take precedence over environment variables.
