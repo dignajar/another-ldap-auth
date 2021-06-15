@@ -188,11 +188,11 @@ def login(username, password):
 		matchingGroups = list(map(cleanMatchingGroups, matchingGroups))
 		validGroups, matchedGroups = cache.validateGroups(username, matchingGroups)
 		if not validGroups:
-			validGroups, matchedGroups = aldap.validateGroups(username, matchingGroups)
+			validGroups, matchedGroups, adGroups = aldap.validateGroups(username, matchingGroups)
 			if not validGroups:
 				return False
 			else:
-				cache.addGroups(username, matchedGroups)
+				cache.addGroups(username, adGroups)
 
 	# Success
 	setRegister(username, matchedGroups)

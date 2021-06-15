@@ -33,15 +33,15 @@ class Cache:
 		if username not in self.cache:
 			self.logs.info({'message':'Adding user to the cache.', 'username': username})
 			passwordHash = self.__hash__(password)
-			self.cache[username] = {'password': passwordHash, 'matchedGroups': []}
+			self.cache[username] = {'password': passwordHash, 'adGroups': []}
 
-	def addGroups(self, username:str, matchedGroups:list):
+	def addGroups(self, username:str, adGroups:list):
 		'''
 			Add user groups to the cache
 		'''
 		if username in self.cache:
-			self.logs.info({'message':'Adding groups to the cache.', 'username': username, 'matchedGroups': ','.join(matchedGroups)})
-			self.cache[username]['matchedGroups'] = list(set(self.cache[username]['matchedGroups'] + matchedGroups))
+			self.logs.info({'message':'Adding groups to the cache.', 'username': username})
+			self.cache[username]['adGroups'] = adGroups
 
 	def validateUser(self, username:str, password:str) -> bool:
 		'''
@@ -69,6 +69,9 @@ class Cache:
 		return False
 
 	def __findMatch__(self, group:str, adGroup:str):
+		# Extract the Common Name from the string (letters, spaces, underscores and hyphens)
+		adGroup = re.match('(?i)CN=((\w*\s?_?-?)*)', adGroup).group(1)
+
 		# Disable case sensitive
 		if not self.groupCaseSensitive:
 			adGroup = adGroup.lower()
@@ -86,12 +89,13 @@ class Cache:
 			Returns True if the groups are valid for the user, False otherwise
 		'''
 		if username in self.cache:
+			adGroups = self.cache[username]['adGroups']
+
+			self.logs.info({'message':'Validating groups from cache.', 'username': username, 'groups': ','.join(groups), 'conditional': self.groupConditional})
 			matchedGroups = []
 			matchesByGroup = []
-			cacheGroups = self.cache[username]['matchedGroups']
-			self.logs.info({'message':'Validating groups via cache.', 'username': username, 'cacheGroups': ','.join(cacheGroups)})
 			for group in groups:
-				matches = list(filter(None,list(map(self.__findMatch__, repeat(group), cacheGroups))))
+				matches = list(filter(None,list(map(self.__findMatch__, repeat(group), adGroups))))
 				if matches:
 					matchesByGroup.append((group,matches))
 					matchedGroups.extend(matches)
