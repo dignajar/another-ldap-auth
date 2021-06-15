@@ -116,15 +116,15 @@ class Aldap:
 		if self.groupConditional == 'or':
 			if len(matchedGroups) > 0:
 				self.logs.info({'message':'At least one group is valid for the user.', 'username': username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
-				return True,matchedGroups
+				return True,matchedGroups,adGroups
 		# Conditiona AND, true if all the groups match
 		elif self.groupConditional == 'and':
 			if len(groups) == len(matchesByGroup):
 				self.logs.info({'message':'All groups are valid for the user.', 'username': username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
-				return True,matchedGroups
+				return True,matchedGroups,adGroups
 		else:
 			self.logs.error({'message':'Invalid conditional group.', 'username': username, 'conditional': self.groupConditional})
-			return False,[]
+			return False,[],[]
 
 		self.logs.error({'message':'Invalid groups for the user.', 'username': username, 'matchedGroups': ','.join(matchedGroups), 'groups': ','.join(groups), 'conditional': self.groupConditional})
-		return False,[]
+		return False,[],[]
