@@ -188,7 +188,7 @@ def login(username, password):
 			if LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL == 'or':
 				setRegister(username, [])
 				return True
-		elif not LDAP_ALLOWED_GROUPS:
+		elif not LDAP_ALLOWED_GROUPS or LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL == 'and':
 			logs.info({'message':'Username not found inside the allowed users list.', 'username': username, 'matchingUsers': ','.join(matchingUsers)})
 			return False
 
