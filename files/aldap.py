@@ -102,7 +102,7 @@ class Aldap:
 			for element in zone:
 				try:
 					adGroups.extend(element['memberOf'])
-				except TypeError:
+				except:
 					None
 		# Create a list from the elements and convert binary to str the items
 		adGroups = list(map(self.__decode__,adGroups))
