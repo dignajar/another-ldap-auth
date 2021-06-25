@@ -17,6 +17,7 @@
 - Supports TLS via self-signed certificate.
 - Supports configuration via headers or via environment variables.
 - Supports HTTP response headers such as username and matched groups.
+- Brute force protection.
 - Log format in Plain-Text or JSON.
 
 ## Diagram
