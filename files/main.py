@@ -4,12 +4,10 @@ from flask import g
 from flask_httpauth import HTTPBasicAuth
 from os import environ
 
-from werkzeug.sansio.request import Request
 from aldap import Aldap
 from cache import Cache
 from logs import Logs
 from bruteforce import BruteForce
-from security import Security
 
 # --- Parameters --------------------------------------------------------------
 # Enable or disable SSL self-signed certificate
