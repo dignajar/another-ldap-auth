@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from logs import Logs
+from security import Security
 
 class BruteForce:
 	def __init__(self, enabled:bool, expirationSeconds:int, blockAfterFailures:int):
@@ -8,14 +9,17 @@ class BruteForce:
 		self.expirationSeconds = expirationSeconds
 		self.blockAfterFailures = blockAfterFailures
 		self.logs = Logs(self.__class__.__name__)
+		self.security = Security()
 
-	def addFailure(self, ip:str):
+	def addFailure(self):
 		'''
 			Increase IP failure
 		'''
 		# Check if brute force protection is enabled
 		if not self.enabled:
 			return False
+
+		ip = self.security.getUserIp()
 
 		# Check if this is the first time that the IP will be in the database
 		if ip not in self.database:
@@ -41,13 +45,15 @@ class BruteForce:
 
 		return False
 
-	def isIpBlocked(self, ip:str) -> bool:
+	def isIpBlocked(self) -> bool:
 		'''
 			Returns True if the IP is blocked, False otherwise
 		'''
 		# Check if brute force protection is enabled
 		if not self.enabled:
 			return False
+
+		ip = self.security.getUserIp()
 
 		if ip not in self.database:
 			self.logs.info({'message':'The IP is not in the database and is not blocked.', 'ip': ip})

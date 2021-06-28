@@ -3,10 +3,13 @@ from flask import request
 from flask import g
 from flask_httpauth import HTTPBasicAuth
 from os import environ
+
+from werkzeug.sansio.request import Request
 from aldap import Aldap
 from cache import Cache
 from logs import Logs
 from bruteforce import BruteForce
+from security import Security
 
 # --- Parameters --------------------------------------------------------------
 # Enable or disable SSL self-signed certificate
@@ -56,9 +59,6 @@ def setRegister(username:str, matchedGroups:list):
 def getRegister(key):
 	return g.get(key)
 
-def getUserIp():
-	return request.remote_addr
-
 # --- Logging -----------------------------------------------------------------
 logs = Logs('main')
 
@@ -78,7 +78,7 @@ def login(username, password):
 		logs.error({'message': 'Username or password empty.'})
 		return False
 
-	if bruteForce.isIpBlocked(getUserIp()):
+	if bruteForce.isIpBlocked():
 		return False
 
 	try:
@@ -176,7 +176,7 @@ def login(username, password):
 		if aldap.authenticateUser(username, password):
 			cache.addUser(username, password)
 		else:
-			bruteForce.addFailure(getUserIp())
+			bruteForce.addFailure()
 			return False
 
 	# Validate user via matching users
