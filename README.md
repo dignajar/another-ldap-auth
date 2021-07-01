@@ -6,13 +6,11 @@
 
 **Another LDAP Authentication** it's prepared to run inside a Docker container, also you can run the Python script without the Docker container.
 
----
 [![Docker Hub](https://img.shields.io/badge/Docker-Hub-blue.svg)](https://hub.docker.com/r/dignajar/another-ldap-auth)
 [![Kubernetes YAML manifests](https://img.shields.io/badge/Kubernetes-manifests-blue.svg)](https://github.com/dignajar/another-ldap-auth/tree/master/kubernetes)
-[![codebeat badge](https://codebeat.co/badges/f57de995-ca62-49e5-b309-82ed60570324)](https://codebeat.co/projects/github-com-dignajar-another-scheduler-master)
+[![codebeat badge](https://codebeat.co/badges/1d7cc634-4af0-4f26-b910-99fc98c61d11)](https://codebeat.co/projects/github-com-dignajar-another-ldap-auth-master)
 [![release](https://img.shields.io/github/v/release/dignajar/another-ldap-auth.svg)](https://github.com/dignajar/another-ldap-auth/releases)
 [![license](https://img.shields.io/badge/license-MIT-green)](https://github.com/dignajar/another-ldap-auth/blob/master/LICENSE)
----
 
 ## Features
 - Supports `ldap` and `ldaps`.
