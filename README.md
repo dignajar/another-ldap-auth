@@ -1,5 +1,7 @@
 # Another LDAP authentication
 
+| New version of Another LDAP via form-based here https://github.com/dignajar/another-ldap
+
 **LDAP Authentication** for **Nginx**, **Nginx ingress controller** (Kubernetes), **HAProxy** ([haproxy-auth-request](https://github.com/TimWolla/haproxy-auth-request)) or any webserver/reverse proxy with authorization based on the result of a subrequest.
 
 **Another LDAP Authentication** is an implementation of the `ldap-auth-daemon` services described in the official blog from Nginx in the [following article](https://www.nginx.com/blog/nginx-plus-authenticate-users/).
