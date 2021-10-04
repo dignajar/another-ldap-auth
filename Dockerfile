@@ -1,4 +1,4 @@
-FROM python:3.9.5-alpine3.13
+FROM python:3.9.7-alpine3.14
 
 ENV LDAP_ENDPOINT=""
 ENV LDAP_MANAGER_DN_USERNAME=""
