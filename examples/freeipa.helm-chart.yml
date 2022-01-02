@@ -1,0 +1,22 @@
+#
+# This file contains example configuration for FreeIPA
+# This is for helm chart, adapt them to your needs
+
+image:
+  repository: dignajar/another-ldap-auth
+  tag: "latest"
+
+# FreeIPA config
+ldap:
+  existingSecret:
+  logLevel: "INFO"
+  logFormat: "TEXT"
+  cacheExpiration: 10
+  # We don't expose the service outside kubernetes - use it for ingress external auth
+  httpsSupport: "disabled"
+  endpoint: "ldaps://my-ipa-dns-or-ip:636"
+  managerDnUsername: "uid=manager-bind-dn,cn=users,cn=accounts,dc=example,dc=ro"
+  managerDnPassword: "put pass for manager-bind-dn"
+  bindDN: "uid={username},cn=users,cn=accounts,dc=example,dc=ro"
+  searchBase: "cn=users,cn=accounts,dc=example,dc=ro"
+  searchFilter: "(&(objectClass=posixAccount)(uid={username}))"
