@@ -183,3 +183,6 @@ Brute force protection is blocking user IP, please read this article to know the
 - `LDAP_REQUIRED_GROUPS_CONDITIONAL` renamed to `LDAP_ALLOWED_GROUPS_CONDITIONAL`
 - `LDAP_REQUIRED_GROUPS_CASE_SENSITIVE` renamed to `LDAP_ALLOWED_GROUPS_CASE_SENSITIVE`
 - `LDAP_SERVER_DOMAIN` removed and replace by `LDAP_BIND_DN`
+
+## ⚠️ Warning ⚠️
+The application accepts configuration parameters via HTTP headers, which can be exploited when used behind Nginx with the auth_request_module. Since Nginx forwards all client-sent headers to the authentication backend, malicious clients can override critical configuration settings by sending specially crafted headers. The solution can be set the configuration in the Nginx location directive to overwrite any client configuration.
